@@ -8,20 +8,63 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/getlantern/systray"
 )
 
 func main() {
-	var operation = getOperationFromUser()
-	if operation == "set" || operation == "reset" {
-		result, err := ChangeDns(operation)
-		if err != nil {
-			panic(err)
-		}
+	systray.Run(onReady, onExit)
 
-		println(result)
-	} else {
-		panic("Invalid operation")
-	}
+	// for {
+	// 	var operation = getOperationFromUser()
+
+	// 	if operation == "set" || operation == "reset" {
+	// 		result, err := ChangeDns(operation)
+	// 		if err != nil {
+	// 			fmt.Fprintln(os.Stderr, "Error while setting DNS:", err)
+	// 			continue
+	// 		}
+
+	// 		println(result)
+	// 	} else {
+	// 		println("Invalid operation. try 'set' or 'reset'")
+	// 	}
+	// }
+}
+
+func onExit() {
+	fmt.Println("Exiting")
+}
+
+func onReady() {
+	// ico, err := os.ReadFile("path/to/icon.ico")
+	// if err != nil {
+	// 	fmt.Println("Unable to read icon:", err)
+	// 	return
+	// }
+	// systray.SetIcon(ico)
+
+	systray.SetTooltip("PlaNet: manage your system DNS")
+
+	mExit := systray.AddMenuItem("Exit", "Exit the application")
+	mSet := systray.AddMenuItem("Set", "Set DNS")
+	mReset := systray.AddMenuItem("Reset", "Reset DNS")
+
+	go func() {
+		<-mExit.ClickedCh
+		systray.Quit()
+		fmt.Println("Quit the app")
+	}()
+
+	go func() {
+		<-mSet.ClickedCh
+		ChangeDns("set")
+	}()
+
+	go func() {
+		<-mReset.ClickedCh
+		ChangeDns("reset")
+	}()
 }
 
 func ChangeDns(operation string) (string, error) {
@@ -59,7 +102,6 @@ func setDns(dns1 string, dns2 string) {
 
 	cmd := exec.Command("powershell", "-Command", commandText)
 
-	// Execute the PowerShell command
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Printf("Failed to execute command: %s, Output: %s\n", err, output)
@@ -73,7 +115,7 @@ func setDns(dns1 string, dns2 string) {
 
 func getOperationFromUser() string {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter value: ")
+	fmt.Print("What can I do for you?", "\n", "you can either execute 'set' or 'reset'")
 	input, err := reader.ReadString('\n')
 	if err != nil {
 		fmt.Println("An error occurred while reading input. Please try again", err)
