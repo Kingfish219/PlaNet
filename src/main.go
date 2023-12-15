@@ -14,22 +14,6 @@ import (
 
 func main() {
 	systray.Run(onReady, onExit)
-
-	// for {
-	// 	var operation = getOperationFromUser()
-
-	// 	if operation == "set" || operation == "reset" {
-	// 		result, err := ChangeDns(operation)
-	// 		if err != nil {
-	// 			fmt.Fprintln(os.Stderr, "Error while setting DNS:", err)
-	// 			continue
-	// 		}
-
-	// 		println(result)
-	// 	} else {
-	// 		println("Invalid operation. try 'set' or 'reset'")
-	// 	}
-	// }
 }
 
 func onExit() {
@@ -37,64 +21,89 @@ func onExit() {
 }
 
 func onReady() {
-	// ico, err := os.ReadFile("path/to/icon.ico")
-	// if err != nil {
-	// 	fmt.Println("Unable to read icon:", err)
-	// 	return
-	// }
-	// systray.SetIcon(ico)
+	setIcon(false)
+	setToolTip("Idle")
 
-	systray.SetTooltip("PlaNet: manage your system DNS")
-
-	mExit := systray.AddMenuItem("Exit", "Exit the application")
 	mSet := systray.AddMenuItem("Set", "Set DNS")
 	mReset := systray.AddMenuItem("Reset", "Reset DNS")
+	mExit := systray.AddMenuItem("Exit", "Exit the application")
 
 	go func() {
 		<-mExit.ClickedCh
 		systray.Quit()
-		fmt.Println("Quit the app")
 	}()
 
 	go func() {
 		<-mSet.ClickedCh
-		ChangeDns("set")
+		_, err := ChangeDns("set")
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println("Shecan set successfully.")
+
+		setIcon(true)
+		setToolTip("Connected to Shecan")
 	}()
 
 	go func() {
 		<-mReset.ClickedCh
-		ChangeDns("reset")
+		_, err := ChangeDns("reset")
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println("Shecan disconnected successfully.")
+
+		setIcon(false)
+		setToolTip("Idle")
 	}()
 }
 
-func ChangeDns(operation string) (string, error) {
+func setIcon(status bool) {
+	var fileName = "idle"
+	if status {
+		fileName = "success"
+	}
+
+	var filePath = "./" + fileName + ".ico"
+	ico, err := os.ReadFile(filePath)
+	if err != nil {
+		fmt.Println("Unable to read icon:", err)
+	} else {
+		systray.SetIcon(ico)
+	}
+}
+
+func setToolTip(toolTip string) {
+	systray.SetTooltip("PlaNet: " + toolTip)
+}
+
+func ChangeDns(operation string) (bool, error) {
 	var activeInterface = getActiveNetworkInterface()
 	if activeInterface == "" {
-		return "", errors.New("Failed getting active network interface")
+		return false, errors.New("Failed to get active network interface")
 	}
 
 	if operation == "set" {
-		setDns("185.51.200.2", "178.22.122.100")
-		return "Success", nil
+		return setDns("185.51.200.2", "178.22.122.100")
 	} else {
-		if err := resetDns(activeInterface); err != nil {
-			return "", errors.New(fmt.Sprintf("Error resetting DNS for %s: %v", activeInterface, err))
-		} else {
-			return fmt.Sprintf("DNS settings reset successfully for %s\n", activeInterface), nil
-		}
+		return resetDns(activeInterface)
 	}
 }
 
-func resetDns(interfaceName string) error {
+func resetDns(interfaceName string) (bool, error) {
 	cmd := exec.Command("netsh", "interface", "ipv4", "set", "dnsservers", "name="+interfaceName, "source=dhcp")
-	return cmd.Run()
+	err := cmd.Run()
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
-func setDns(dns1 string, dns2 string) {
+func setDns(dns1 string, dns2 string) (bool, error) {
 	var activeInterface = getActiveNetworkInterface()
 	if activeInterface == "" {
-		fmt.Print("Failed getting active network interface")
-		return
+		return false, fmt.Errorf("Failed getting active network interface")
 	}
 
 	commandText := fmt.Sprintf(`Set-DNSClientServerAddress -InterfaceAlias "%s" -ServerAddresses ("%s","%s")`,
@@ -104,13 +113,10 @@ func setDns(dns1 string, dns2 string) {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Printf("Failed to execute command: %s, Output: %s\n", err, output)
-		return
+		return false, fmt.Errorf("Failed to execute command: %s, Output: %s\n", err, output)
 	}
 
-	fmt.Println(output)
-
-	fmt.Println("DNS settings updated successfully.")
+	return true, nil
 }
 
 func getOperationFromUser() string {
