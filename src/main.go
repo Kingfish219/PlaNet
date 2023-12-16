@@ -1,6 +1,7 @@
 package main
 
 import (
+	"PlaNet/src/models"
 	"bufio"
 	"errors"
 	"fmt"
@@ -22,11 +23,17 @@ func onExit() {
 
 func onReady() {
 	setIcon(false)
-	setToolTip("Idle")
+	setToolTip("Not connected")
 
 	mSet := systray.AddMenuItem("Set", "Set DNS")
 	mReset := systray.AddMenuItem("Reset", "Reset DNS")
 	mExit := systray.AddMenuItem("Exit", "Exit the application")
+
+	var shecan = models.Dns{
+		Name:         "Shecan",
+		PrimaryDns:   "185.51.200.2",
+		SecendaryDns: "178.22.122.100",
+	}
 
 	go func() {
 		<-mExit.ClickedCh
@@ -35,26 +42,26 @@ func onReady() {
 
 	go func() {
 		<-mSet.ClickedCh
-		_, err := ChangeDns("set")
+		_, err := ChangeDns("set", shecan)
 		if err != nil {
 			fmt.Println(err)
 		}
 		fmt.Println("Shecan set successfully.")
 
 		setIcon(true)
-		setToolTip("Connected to Shecan")
+		setToolTip("Connected to: Shecan")
 	}()
 
 	go func() {
 		<-mReset.ClickedCh
-		_, err := ChangeDns("reset")
+		_, err := ChangeDns("reset", shecan)
 		if err != nil {
 			fmt.Println(err)
 		}
 		fmt.Println("Shecan disconnected successfully.")
 
 		setIcon(false)
-		setToolTip("Idle")
+		setToolTip("Not connected")
 	}()
 }
 
@@ -64,7 +71,7 @@ func setIcon(status bool) {
 		fileName = "success"
 	}
 
-	var filePath = "./" + fileName + ".ico"
+	var filePath = "./assets/" + fileName + ".ico"
 	ico, err := os.ReadFile(filePath)
 	if err != nil {
 		fmt.Println("Unable to read icon:", err)
@@ -74,20 +81,77 @@ func setIcon(status bool) {
 }
 
 func setToolTip(toolTip string) {
-	systray.SetTooltip("PlaNet: " + toolTip)
+	systray.SetTooltip("PlaNet:\n" + toolTip)
 }
 
-func ChangeDns(operation string) (bool, error) {
+func ChangeDns(operation string, dns models.Dns) (bool, error) {
 	var activeInterface = getActiveNetworkInterface()
+	fmt.Println(activeInterface)
 	if activeInterface == "" {
-		return false, errors.New("Failed to get active network interface")
+		return false, errors.New("failed to get active network interface")
 	}
 
 	if operation == "set" {
-		return setDns("185.51.200.2", "178.22.122.100")
+		return setDns(activeInterface, dns.PrimaryDns, dns.SecendaryDns)
 	} else {
 		return resetDns(activeInterface)
 	}
+}
+
+type IPConfiguration struct {
+	IPAddress      string
+	SubnetMask     string
+	DefaultGateway string
+}
+
+func getStaticIPConfiguration(interfaceName string) (bool, *IPConfiguration, error) {
+	cmd := exec.Command("netsh", "interface", "ipv4", "show", "config", "name="+interfaceName)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return false, nil, err
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(string(output)))
+	ipConfig := &IPConfiguration{}
+	read := false
+
+	for scanner.Scan() {
+		line := strings.ToLower(strings.TrimSpace(scanner.Text()))
+
+		if strings.Contains(line, strings.ToLower("Configuration for interface")) {
+			read = true
+			continue
+		}
+
+		if read && strings.HasPrefix(line, strings.ToLower("DHCP enabled")) {
+			fields := strings.Fields(line)
+			var enabled = fields[2]
+			if strings.EqualFold(enabled, "yes") {
+				return true, nil, nil
+			}
+		}
+
+		if read && strings.HasPrefix(line, strings.ToLower("IP Address")) {
+			fields := strings.Fields(line)
+			ipConfig.IPAddress = fields[2]
+		}
+
+		if read && strings.HasPrefix(line, strings.ToLower("Subnet")) {
+			fields := strings.Fields(line)
+			ipConfig.SubnetMask = strings.TrimRight(fields[4], ")")
+		}
+
+		if read && strings.HasPrefix(line, strings.ToLower("Default Gateway")) {
+			fields := strings.Fields(line)
+			ipConfig.DefaultGateway = fields[2]
+		}
+	}
+
+	if ipConfig.IPAddress == "" || ipConfig.SubnetMask == "" {
+		return false, ipConfig, fmt.Errorf("no static IP configuration found for interface: %s", interfaceName)
+	}
+
+	return true, ipConfig, nil
 }
 
 func resetDns(interfaceName string) (bool, error) {
@@ -100,38 +164,33 @@ func resetDns(interfaceName string) (bool, error) {
 	return true, nil
 }
 
-func setDns(dns1 string, dns2 string) (bool, error) {
-	var activeInterface = getActiveNetworkInterface()
-	if activeInterface == "" {
-		return false, fmt.Errorf("Failed getting active network interface")
-	}
-
+func setDns(interfaceName string, dns1 string, dns2 string) (bool, error) {
 	commandText := fmt.Sprintf(`Set-DNSClientServerAddress -InterfaceAlias "%s" -ServerAddresses ("%s","%s")`,
-		activeInterface, dns1, dns2)
+		interfaceName, dns1, dns2)
 
 	cmd := exec.Command("powershell", "-Command", commandText)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return false, fmt.Errorf("Failed to execute command: %s, Output: %s\n", err, output)
+		return false, fmt.Errorf("failed to execute command: %s, output: %s", err, output)
 	}
 
 	return true, nil
 }
 
-func getOperationFromUser() string {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("What can I do for you?", "\n", "you can either execute 'set' or 'reset'")
-	input, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Println("An error occurred while reading input. Please try again", err)
-		return ""
-	}
+// func getOperationFromUser() string {
+// 	reader := bufio.NewReader(os.Stdin)
+// 	fmt.Print("What can I do for you?", "\n", "you can either execute 'set' or 'reset'")
+// 	input, err := reader.ReadString('\n')
+// 	if err != nil {
+// 		fmt.Println("An error occurred while reading input. Please try again", err)
+// 		return ""
+// 	}
 
-	input = strings.TrimSpace(input)
+// 	input = strings.TrimSpace(input)
 
-	return input
-}
+// 	return input
+// }
 
 func getActiveNetworkInterface() string {
 	interfaces, err := net.Interfaces()
