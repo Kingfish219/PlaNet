@@ -1,19 +1,27 @@
 # PlaNet
+
+<div align="left">
+    <br />
+    <img src="src\assets\PlaNet.png" alt="Logo" width="80">
+    <br />
+    <br />
+</div>
+
 PlaNet is a convenient system tray application for Windows that enables users to quickly set and reset their DNS settings to predefined configurations.
 
-### Features
+## Features
 
 - **Set DNS:** Change your current DNS to the Shecan DNS servers for potentially faster and more secure internet browsing.
 - **Reset DNS:** Revert to your original DNS settings with one click.
 - **System Tray Integration:** Runs quietly in the system tray, allowing for easy access without cluttering your desktop.
 
-### Prerequisites
+## Prerequisites
 
 Before you begin, ensure you have met the following requirements:
 - Windows operating system with .NET Framework
 - Administrator privileges for changing network settings
 
-### Installation
+## Installation
 
 1. Clone the repository to your local machine using `git clone`.
 2. Navigate to the cloned directory.
