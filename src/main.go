@@ -13,6 +13,8 @@ import (
 	"github.com/getlantern/systray"
 )
 
+var currentIpConfig models.IPConfiguration
+
 func main() {
 	systray.Run(onReady, onExit)
 }
@@ -42,7 +44,7 @@ func onReady() {
 
 	go func() {
 		<-mSet.ClickedCh
-		_, err := ChangeDns("set", shecan)
+		_, err := changeDns("set", shecan)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -54,7 +56,7 @@ func onReady() {
 
 	go func() {
 		<-mReset.ClickedCh
-		_, err := ChangeDns("reset", shecan)
+		_, err := changeDns("reset", shecan)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -84,27 +86,61 @@ func setToolTip(toolTip string) {
 	systray.SetTooltip("PlaNet:\n" + toolTip)
 }
 
-func ChangeDns(operation string, dns models.Dns) (bool, error) {
-	var activeInterface = getActiveNetworkInterface()
-	fmt.Println(activeInterface)
-	if activeInterface == "" {
+func changeDns(operation string, dns models.Dns) (bool, error) {
+	var activeInterfaceName = getActiveNetworkInterface()
+	if activeInterfaceName == "" {
 		return false, errors.New("failed to get active network interface")
 	}
 
 	if operation == "set" {
-		return setDns(activeInterface, dns.PrimaryDns, dns.SecendaryDns)
+		currentIpConfig.IPAddress = ""
+		currentIpConfig.SubnetMask = ""
+		currentIpConfig.DefaultGateway = ""
+
+		result, ipConfig, _ := getStaticIPConfiguration(activeInterfaceName)
+		if result && ipConfig != nil {
+			fmt.Println(ipConfig)
+			currentIpConfig = *ipConfig
+		}
+
+		return setDns(activeInterfaceName, dns.PrimaryDns, dns.SecendaryDns)
 	} else {
-		return resetDns(activeInterface)
+		var result, err = resetDns(activeInterfaceName)
+		if result && currentIpConfig.IPAddress != "" {
+			fmt.Println("Reset")
+			fmt.Println(currentIpConfig)
+			setStaticIPConfiguration(activeInterfaceName, &currentIpConfig)
+		}
+
+		return result, err
 	}
 }
 
-type IPConfiguration struct {
-	IPAddress      string
-	SubnetMask     string
-	DefaultGateway string
+func resetDns(interfaceName string) (bool, error) {
+	cmd := exec.Command("netsh", "interface", "ipv4", "set", "dnsservers", "name="+interfaceName, "source=dhcp")
+	err := cmd.Run()
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
-func getStaticIPConfiguration(interfaceName string) (bool, *IPConfiguration, error) {
+func setDns(interfaceName string, dns1 string, dns2 string) (bool, error) {
+	commandText := fmt.Sprintf(`Set-DNSClientServerAddress -InterfaceAlias "%s" -ServerAddresses ("%s","%s")`,
+		interfaceName, dns1, dns2)
+
+	cmd := exec.Command("powershell", "-Command", commandText)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return false, fmt.Errorf("failed to execute command: %s, output: %s", err, output)
+	}
+
+	return true, nil
+}
+
+func getStaticIPConfiguration(interfaceName string) (bool, *models.IPConfiguration, error) {
 	cmd := exec.Command("netsh", "interface", "ipv4", "show", "config", "name="+interfaceName)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -112,7 +148,7 @@ func getStaticIPConfiguration(interfaceName string) (bool, *IPConfiguration, err
 	}
 
 	scanner := bufio.NewScanner(strings.NewReader(string(output)))
-	ipConfig := &IPConfiguration{}
+	ipConfig := &models.IPConfiguration{}
 	read := false
 
 	for scanner.Scan() {
@@ -154,28 +190,11 @@ func getStaticIPConfiguration(interfaceName string) (bool, *IPConfiguration, err
 	return true, ipConfig, nil
 }
 
-func resetDns(interfaceName string) (bool, error) {
-	cmd := exec.Command("netsh", "interface", "ipv4", "set", "dnsservers", "name="+interfaceName, "source=dhcp")
-	err := cmd.Run()
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
-
-func setDns(interfaceName string, dns1 string, dns2 string) (bool, error) {
-	commandText := fmt.Sprintf(`Set-DNSClientServerAddress -InterfaceAlias "%s" -ServerAddresses ("%s","%s")`,
-		interfaceName, dns1, dns2)
-
-	cmd := exec.Command("powershell", "-Command", commandText)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return false, fmt.Errorf("failed to execute command: %s, output: %s", err, output)
-	}
-
-	return true, nil
+func setStaticIPConfiguration(interfaceName string, ipConfig *models.IPConfiguration) error {
+	cmd := exec.Command("netsh", "interface", "ipv4", "set", "address", "name="+interfaceName,
+		"source=static", "addr="+ipConfig.IPAddress, "mask="+ipConfig.SubnetMask,
+		"gateway="+ipConfig.DefaultGateway)
+	return cmd.Run()
 }
 
 // func getOperationFromUser() string {
