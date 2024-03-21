@@ -1,7 +1,6 @@
 package main
 
 import (
-	"PlaNet/src/domain"
 	"bufio"
 	"errors"
 	"fmt"
@@ -10,10 +9,9 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/Kingfish219/PlaNet/internal/domain"
 	"github.com/getlantern/systray"
 )
-
-var currentIpConfig domain.IPConfiguration
 
 func main() {
 	systray.Run(onReady, onExit)
@@ -68,12 +66,12 @@ func onReady() {
 }
 
 func setIcon(status bool) {
-	var fileName = "idle"
+	fileName := "idle"
 	if status {
 		fileName = "success"
 	}
 
-	var filePath = "./assets/" + fileName + ".ico"
+	filePath := "./assets/" + fileName + ".ico"
 	ico, err := os.ReadFile(filePath)
 	if err != nil {
 		fmt.Println("Unable to read icon:", err)
@@ -91,6 +89,8 @@ func changeDns(operation string, dns domain.Dns) (bool, error) {
 	if activeInterfaceName == "" {
 		return false, errors.New("failed to get active network interface")
 	}
+
+	currentIpConfig := domain.IPConfiguration{}
 
 	if operation == "set" {
 		currentIpConfig.IPAddress = ""
@@ -196,20 +196,6 @@ func setStaticIPConfiguration(interfaceName string, ipConfig *domain.IPConfigura
 		"gateway="+ipConfig.DefaultGateway)
 	return cmd.Run()
 }
-
-// func getOperationFromUser() string {
-// 	reader := bufio.NewReader(os.Stdin)
-// 	fmt.Print("What can I do for you?", "\n", "you can either execute 'set' or 'reset'")
-// 	input, err := reader.ReadString('\n')
-// 	if err != nil {
-// 		fmt.Println("An error occurred while reading input. Please try again", err)
-// 		return ""
-// 	}
-
-// 	input = strings.TrimSpace(input)
-
-// 	return input
-// }
 
 func getActiveNetworkInterface() string {
 	interfaces, err := net.Interfaces()

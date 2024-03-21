@@ -1,4 +1,4 @@
-module PlaNet
+module github.com/Kingfish219/PlaNet
 
 go 1.21.5
 
