@@ -1,7 +1,7 @@
 package main
 
 import (
-	"PlaNet/src/models"
+	"PlaNet/src/domain"
 	"bufio"
 	"errors"
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	"github.com/getlantern/systray"
 )
 
-var currentIpConfig models.IPConfiguration
+var currentIpConfig domain.IPConfiguration
 
 func main() {
 	systray.Run(onReady, onExit)
@@ -27,23 +27,23 @@ func onReady() {
 	setIcon(false)
 	setToolTip("Not connected")
 
-	mSet := systray.AddMenuItem("Set", "Set DNS")
-	mReset := systray.AddMenuItem("Reset", "Reset DNS")
-	mExit := systray.AddMenuItem("Exit", "Exit the application")
+	menuSet := systray.AddMenuItem("Set", "Set DNS")
+	menuReset := systray.AddMenuItem("Reset", "Reset DNS")
+	menuExit := systray.AddMenuItem("Exit", "Exit the application")
 
-	var shecan = models.Dns{
+	var shecan = domain.Dns{
 		Name:         "Shecan",
 		PrimaryDns:   "185.51.200.2",
 		SecendaryDns: "178.22.122.100",
 	}
 
 	go func() {
-		<-mExit.ClickedCh
+		<-menuExit.ClickedCh
 		systray.Quit()
 	}()
 
 	go func() {
-		<-mSet.ClickedCh
+		<-menuSet.ClickedCh
 		_, err := changeDns("set", shecan)
 		if err != nil {
 			fmt.Println(err)
@@ -55,7 +55,7 @@ func onReady() {
 	}()
 
 	go func() {
-		<-mReset.ClickedCh
+		<-menuReset.ClickedCh
 		_, err := changeDns("reset", shecan)
 		if err != nil {
 			fmt.Println(err)
@@ -86,7 +86,7 @@ func setToolTip(toolTip string) {
 	systray.SetTooltip("PlaNet:\n" + toolTip)
 }
 
-func changeDns(operation string, dns models.Dns) (bool, error) {
+func changeDns(operation string, dns domain.Dns) (bool, error) {
 	var activeInterfaceName = getActiveNetworkInterface()
 	if activeInterfaceName == "" {
 		return false, errors.New("failed to get active network interface")
@@ -140,7 +140,7 @@ func setDns(interfaceName string, dns1 string, dns2 string) (bool, error) {
 	return true, nil
 }
 
-func getStaticIPConfiguration(interfaceName string) (bool, *models.IPConfiguration, error) {
+func getStaticIPConfiguration(interfaceName string) (bool, *domain.IPConfiguration, error) {
 	cmd := exec.Command("netsh", "interface", "ipv4", "show", "config", "name="+interfaceName)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -148,7 +148,7 @@ func getStaticIPConfiguration(interfaceName string) (bool, *models.IPConfigurati
 	}
 
 	scanner := bufio.NewScanner(strings.NewReader(string(output)))
-	ipConfig := &models.IPConfiguration{}
+	ipConfig := &domain.IPConfiguration{}
 	read := false
 
 	for scanner.Scan() {
@@ -190,7 +190,7 @@ func getStaticIPConfiguration(interfaceName string) (bool, *models.IPConfigurati
 	return true, ipConfig, nil
 }
 
-func setStaticIPConfiguration(interfaceName string, ipConfig *models.IPConfiguration) error {
+func setStaticIPConfiguration(interfaceName string, ipConfig *domain.IPConfiguration) error {
 	cmd := exec.Command("netsh", "interface", "ipv4", "set", "address", "name="+interfaceName,
 		"source=static", "addr="+ipConfig.IPAddress, "mask="+ipConfig.SubnetMask,
 		"gateway="+ipConfig.DefaultGateway)
