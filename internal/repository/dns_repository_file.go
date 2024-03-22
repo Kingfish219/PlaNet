@@ -23,6 +23,10 @@ func (repo DnsRepositoryFile) GetDnsConfigurations() ([]domain.Dns, error) {
 		return nil, err
 	}
 
+	if len(file) == 0 {
+		return []domain.Dns{}, nil
+	}
+
 	var dnsList []domain.Dns
 	err = json.Unmarshal(file, &dnsList)
 	if err != nil {

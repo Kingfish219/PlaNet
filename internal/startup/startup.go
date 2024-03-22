@@ -1,10 +1,13 @@
 package startup
 
 import (
-	"fmt"
+	"errors"
 	"os"
+	"path/filepath"
 
 	"github.com/Kingfish219/PlaNet/internal/interfaces"
+	"github.com/Kingfish219/PlaNet/internal/repository"
+	"github.com/Kingfish219/PlaNet/internal/ui"
 )
 
 type Startup struct {
@@ -18,18 +21,18 @@ func New() Startup {
 }
 
 func (startup *Startup) Initialize() error {
-	fmt.Println(os.UserConfigDir())
-	fmt.Println(os.UserHomeDir())
-	fmt.Println(os.TempDir())
-	fmt.Println(os.UserCacheDir())
+	repoFilePath, err := startup.createRepoFilePath()
+	if err != nil {
+		return err
+	}
 
-	// dnsRepository := repository.NewDnsRepository("")
+	dnsRepository := repository.NewDnsRepository(repoFilePath)
 
-	// console := ui.ConsoleUI{}
-	// startup.userInterfaces = append(startup.userInterfaces, console)
+	console := ui.ConsoleUI{}
+	startup.userInterfaces = append(startup.userInterfaces, console)
 
-	// systray := ui.NewSystrayUI(dnsRepository)
-	// startup.userInterfaces = append(startup.userInterfaces, systray)
+	systray := ui.NewSystrayUI(dnsRepository)
+	startup.userInterfaces = append(startup.userInterfaces, systray)
 
 	return nil
 }
@@ -42,4 +45,32 @@ func (startup *Startup) Start() error {
 	}
 
 	return err
+}
+
+func (startup *Startup) createRepoFilePath() (string, error) {
+	tempDirPath, err := os.UserCacheDir()
+	if err != nil {
+		tempDirPath = os.TempDir()
+	}
+
+	planetTempDirPath := filepath.Join(tempDirPath, "PlaNet")
+	err = os.MkdirAll(planetTempDirPath, 0644)
+	if err != nil {
+		return "", err
+	}
+
+	repoFilePath := filepath.Join(planetTempDirPath, "dns_config.json")
+	_, err = os.Stat(repoFilePath)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return "", nil
+		}
+
+		_, err = os.Create(repoFilePath)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return repoFilePath, nil
 }
