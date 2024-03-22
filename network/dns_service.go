@@ -12,7 +12,14 @@ type DnsService struct {
 	PreviousIPConfiguration domain.IPConfiguration
 }
 
-func (dnsService DnsService) ChangeDns(operation string, dns domain.Dns) (bool, error) {
+type DnsOperation int
+
+const (
+	Set DnsOperation = iota
+	Reset
+)
+
+func (dnsService DnsService) ChangeDns(operation DnsOperation, dns domain.Dns) (bool, error) {
 	activeInterfaceNames, err := getActiveNetworkInterface()
 	if activeInterfaceNames == nil || err != nil {
 		return false, err
@@ -25,7 +32,7 @@ func (dnsService DnsService) ChangeDns(operation string, dns domain.Dns) (bool, 
 	currentIpConfig := domain.IPConfiguration{}
 	var result bool
 
-	if operation == "set" {
+	if operation == Set {
 		currentIpConfig.IPAddress = ""
 		currentIpConfig.SubnetMask = ""
 		currentIpConfig.DefaultGateway = ""

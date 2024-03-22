@@ -1,35 +1,44 @@
 package startup
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/Kingfish219/PlaNet/internal/interfaces"
-	"github.com/Kingfish219/PlaNet/internal/io"
 )
 
 type Startup struct {
-	interactionables []interfaces.Interactionable
+	userInterfaces []interfaces.UserInterface
 }
 
 func New() Startup {
 	return Startup{
-		interactionables: []interfaces.Interactionable{},
+		userInterfaces: []interfaces.UserInterface{},
 	}
 }
 
-func (startup *Startup) Prepare() error {
-	console := io.ConsoleIO{}
-	startup.interactionables = append(startup.interactionables, console)
+func (startup *Startup) Initialize() error {
+	fmt.Println(os.UserConfigDir())
+	fmt.Println(os.UserHomeDir())
+	fmt.Println(os.TempDir())
+	fmt.Println(os.UserCacheDir())
 
-	systray := io.SystrayIO{}
-	startup.interactionables = append(startup.interactionables, systray)
+	// dnsRepository := repository.NewDnsRepository("")
+
+	// console := ui.ConsoleUI{}
+	// startup.userInterfaces = append(startup.userInterfaces, console)
+
+	// systray := ui.NewSystrayUI(dnsRepository)
+	// startup.userInterfaces = append(startup.userInterfaces, systray)
 
 	return nil
 }
 
-func (startup *Startup) Initialize() error {
+func (startup *Startup) Start() error {
 	var err error
 
-	for _, Interactionable := range startup.interactionables {
-		err = Interactionable.Initialize()
+	for _, userInterface := range startup.userInterfaces {
+		err = userInterface.Initialize()
 	}
 
 	return err

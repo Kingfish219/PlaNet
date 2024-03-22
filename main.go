@@ -8,14 +8,14 @@ import (
 
 func main() {
 	startup := startup.New()
-	err := startup.Prepare()
+	err := startup.Initialize()
 	if err != nil {
 		fmt.Println(err)
 
 		return
 	}
 
-	err = startup.Initialize()
+	err = startup.Start()
 	if err != nil {
 		fmt.Println(err)
 

@@ -1,5 +1,5 @@
 package interfaces
 
-type Interactionable interface {
+type UserInterface interface {
 	Initialize() error
 }
