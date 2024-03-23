@@ -12,9 +12,10 @@ import (
 )
 
 type SystrayUI struct {
-	dnsRepository            interfaces.DnsRepository
-	dnsConfigurations        []domain.Dns
-	selectedDnsConfiguration domain.Dns
+	dnsRepository             interfaces.DnsRepository
+	dnsConfigurations         []domain.Dns
+	selectedDnsConfiguration  domain.Dns
+	connectedDnsConfiguration domain.Dns
 }
 
 func NewSystrayUI(dnsRepository interfaces.DnsRepository) *SystrayUI {
@@ -87,25 +88,36 @@ func (systrayUI *SystrayUI) addDnsConfigurations() error {
 
 	systrayUI.dnsConfigurations = dnsConfigurations
 
-	var dnsConfigSubMenu *systray.MenuItem
-
 	dnsConfigMenu := systray.AddMenuItem(fmt.Sprintf("DNS config: %v", systrayUI.dnsConfigurations[0].Name), "Selected DNS Configuration")
 	for _, dns := range systrayUI.dnsConfigurations {
-		dnsConfigSubMenu = dnsConfigMenu.AddSubMenuItem(dns.Name, dns.Name)
+		dnsConfigSubMenu := dnsConfigMenu.AddSubMenuItem(dns.Name, dns.Name)
+		localDns := dns
+
+		go func(localDns domain.Dns) {
+			<-dnsConfigSubMenu.ClickedCh
+			if systrayUI.connectedDnsConfiguration.Name != localDns.Name {
+				dnsService := network.DnsService{}
+				_, err := dnsService.ChangeDns(network.ResetDns, systrayUI.connectedDnsConfiguration)
+				if err != nil {
+					fmt.Println(err)
+
+					return
+				}
+			}
+
+			dnsConfigMenu.SetTitle(fmt.Sprintf("DNS config: %v", localDns.Name))
+			systrayUI.selectedDnsConfiguration = localDns
+		}(localDns)
 	}
 
 	menuSet := systray.AddMenuItem("Set DNS", "Set DNS")
 	menuReset := systray.AddMenuItem("Reset DNS", "Reset DNS")
 
 	go func() {
-		<-dnsConfigSubMenu.ClickedCh
-		fmt.Println(dnsConfigSubMenu.String())
-	}()
-
-	go func() {
 		<-menuSet.ClickedCh
+
 		dnsService := network.DnsService{}
-		_, err := dnsService.ChangeDns(network.Set, systrayUI.dnsConfigurations[0])
+		_, err := dnsService.ChangeDns(network.SetDns, systrayUI.selectedDnsConfiguration)
 		if err != nil {
 			fmt.Println(err)
 
@@ -120,8 +132,11 @@ func (systrayUI *SystrayUI) addDnsConfigurations() error {
 
 	go func() {
 		<-menuReset.ClickedCh
+
+		fmt.Println(systrayUI.selectedDnsConfiguration)
+
 		dnsService := network.DnsService{}
-		_, err := dnsService.ChangeDns(network.Reset, systrayUI.dnsConfigurations[0])
+		_, err := dnsService.ChangeDns(network.ResetDns, systrayUI.connectedDnsConfiguration)
 		if err != nil {
 			fmt.Println(err)
 
