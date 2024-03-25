@@ -1,4 +1,4 @@
-package ui
+package systray
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ type SystrayUI struct {
 	selectedDnsConfiguration domain.Dns
 }
 
-func NewSystrayUI(dnsRepository interfaces.DnsRepository) *SystrayUI {
+func New(dnsRepository interfaces.DnsRepository) *SystrayUI {
 	return &SystrayUI{
 		dnsRepository: dnsRepository,
 	}

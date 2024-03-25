@@ -7,7 +7,8 @@ import (
 
 	"github.com/Kingfish219/PlaNet/internal/interfaces"
 	"github.com/Kingfish219/PlaNet/internal/repository"
-	"github.com/Kingfish219/PlaNet/internal/ui"
+	"github.com/Kingfish219/PlaNet/internal/ui/console"
+	"github.com/Kingfish219/PlaNet/internal/ui/menu/systray"
 )
 
 type Startup struct {
@@ -28,10 +29,10 @@ func (startup *Startup) Initialize() error {
 
 	dnsRepository := repository.NewDnsRepository(repoFilePath)
 
-	console := ui.ConsoleUI{}
+	console := console.New()
 	startup.userInterfaces = append(startup.userInterfaces, console)
 
-	systray := ui.NewSystrayUI(dnsRepository)
+	systray := systray.New(dnsRepository)
 	startup.userInterfaces = append(startup.userInterfaces, systray)
 
 	return nil
