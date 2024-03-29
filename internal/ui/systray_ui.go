@@ -94,19 +94,23 @@ func (systrayUI *SystrayUI) addDnsConfigurations() error {
 		localDns := dns
 
 		go func(localDns domain.Dns) {
-			<-dnsConfigSubMenu.ClickedCh
-			if systrayUI.connectedDnsConfiguration.Name != localDns.Name {
-				dnsService := network.DnsService{}
-				_, err := dnsService.ChangeDns(network.ResetDns, systrayUI.connectedDnsConfiguration)
-				if err != nil {
-					fmt.Println(err)
+			for {
+				<-dnsConfigSubMenu.ClickedCh
+				if systrayUI.connectedDnsConfiguration.Name != localDns.Name {
+					dnsService := network.DnsService{}
+					_, err := dnsService.ChangeDns(network.ResetDns, systrayUI.connectedDnsConfiguration)
+					if err != nil {
+						fmt.Println(err)
 
-					return
+						return
+					}
 				}
+
+				systrayUI.setIcon(false)
+				dnsConfigMenu.SetTitle(fmt.Sprintf("DNS config: %v", localDns.Name))
+				systrayUI.selectedDnsConfiguration = localDns
 			}
 
-			dnsConfigMenu.SetTitle(fmt.Sprintf("DNS config: %v", localDns.Name))
-			systrayUI.selectedDnsConfiguration = localDns
 		}(localDns)
 	}
 
@@ -114,39 +118,43 @@ func (systrayUI *SystrayUI) addDnsConfigurations() error {
 	menuReset := systray.AddMenuItem("Reset DNS", "Reset DNS")
 
 	go func() {
-		<-menuSet.ClickedCh
+		for {
+			<-menuSet.ClickedCh
+			dnsService := network.DnsService{}
+			_, err := dnsService.ChangeDns(network.SetDns, systrayUI.selectedDnsConfiguration)
+			if err != nil {
+				fmt.Println(err)
 
-		dnsService := network.DnsService{}
-		_, err := dnsService.ChangeDns(network.SetDns, systrayUI.selectedDnsConfiguration)
-		if err != nil {
-			fmt.Println(err)
+				return
+			}
 
-			return
+			fmt.Println("Shecan set successfully.")
+
+			systrayUI.setIcon(true)
+			systrayUI.setToolTip("Connected to: Shecan")
 		}
 
-		fmt.Println("Shecan set successfully.")
-
-		systrayUI.setIcon(true)
-		systrayUI.setToolTip("Connected to: Shecan")
 	}()
 
 	go func() {
-		<-menuReset.ClickedCh
+		for {
+			<-menuReset.ClickedCh
+			fmt.Println(systrayUI.selectedDnsConfiguration)
 
-		fmt.Println(systrayUI.selectedDnsConfiguration)
+			dnsService := network.DnsService{}
+			_, err := dnsService.ChangeDns(network.ResetDns, systrayUI.connectedDnsConfiguration)
+			if err != nil {
+				fmt.Println(err)
 
-		dnsService := network.DnsService{}
-		_, err := dnsService.ChangeDns(network.ResetDns, systrayUI.connectedDnsConfiguration)
-		if err != nil {
-			fmt.Println(err)
+				return
+			}
 
-			return
+			fmt.Println("Shecan disconnected successfully.")
+
+			systrayUI.setIcon(false)
+			systrayUI.setToolTip("Not connected")
 		}
 
-		fmt.Println("Shecan disconnected successfully.")
-
-		systrayUI.setIcon(false)
-		systrayUI.setToolTip("Not connected")
 	}()
 
 	return nil
