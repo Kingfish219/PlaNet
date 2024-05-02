@@ -74,7 +74,7 @@ func (systrayUI *SystrayUI) addDnsConfigurations() error {
 	}
 
 	if len(dnsConfigurations) == 0 {
-		presetDnsList := presets.GetDnsConfigurations()
+		presetDnsList := presets.GetDnsPresets()
 		for _, pre := range presetDnsList {
 			systrayUI.dnsRepository.ModifyDnsConfigurations(pre)
 		}
