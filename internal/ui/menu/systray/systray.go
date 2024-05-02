@@ -12,9 +12,10 @@ import (
 )
 
 type SystrayUI struct {
-	dnsRepository            interfaces.DnsRepository
-	dnsConfigurations        []domain.Dns
-	selectedDnsConfiguration domain.Dns
+	dnsRepository             interfaces.DnsRepository
+	dnsConfigurations         []domain.Dns
+	selectedDnsConfiguration  domain.Dns
+	connectedDnsConfiguration domain.Dns
 }
 
 func New(dnsRepository interfaces.DnsRepository) *SystrayUI {
@@ -87,51 +88,73 @@ func (systrayUI *SystrayUI) addDnsConfigurations() error {
 
 	systrayUI.dnsConfigurations = dnsConfigurations
 
-	var dnsConfigSubMenu *systray.MenuItem
-
 	dnsConfigMenu := systray.AddMenuItem(fmt.Sprintf("DNS config: %v", systrayUI.dnsConfigurations[0].Name), "Selected DNS Configuration")
 	for _, dns := range systrayUI.dnsConfigurations {
-		dnsConfigSubMenu = dnsConfigMenu.AddSubMenuItem(dns.Name, dns.Name)
+		dnsConfigSubMenu := dnsConfigMenu.AddSubMenuItem(dns.Name, dns.Name)
+		localDns := dns
+
+		go func(localDns domain.Dns) {
+			for {
+				<-dnsConfigSubMenu.ClickedCh
+				if systrayUI.connectedDnsConfiguration.Name != localDns.Name {
+					dnsService := network.DnsService{}
+					_, err := dnsService.ChangeDns(network.ResetDns, systrayUI.connectedDnsConfiguration)
+					if err != nil {
+						fmt.Println(err)
+
+						return
+					}
+				}
+
+				systrayUI.setIcon(false)
+				dnsConfigMenu.SetTitle(fmt.Sprintf("DNS config: %v", localDns.Name))
+				systrayUI.selectedDnsConfiguration = localDns
+			}
+
+		}(localDns)
 	}
 
 	menuSet := systray.AddMenuItem("Set DNS", "Set DNS")
 	menuReset := systray.AddMenuItem("Reset DNS", "Reset DNS")
 
 	go func() {
-		<-dnsConfigSubMenu.ClickedCh
-		fmt.Println(dnsConfigSubMenu.String())
+		for {
+			<-menuSet.ClickedCh
+			dnsService := network.DnsService{}
+			_, err := dnsService.ChangeDns(network.SetDns, systrayUI.selectedDnsConfiguration)
+			if err != nil {
+				fmt.Println(err)
+
+				return
+			}
+
+			fmt.Println("Shecan set successfully.")
+
+			systrayUI.setIcon(true)
+			systrayUI.setToolTip("Connected to: Shecan")
+		}
+
 	}()
 
 	go func() {
-		<-menuSet.ClickedCh
-		dnsService := network.DnsService{}
-		_, err := dnsService.ChangeDns(network.Set, systrayUI.dnsConfigurations[0])
-		if err != nil {
-			fmt.Println(err)
+		for {
+			<-menuReset.ClickedCh
+			fmt.Println(systrayUI.selectedDnsConfiguration)
 
-			return
+			dnsService := network.DnsService{}
+			_, err := dnsService.ChangeDns(network.ResetDns, systrayUI.connectedDnsConfiguration)
+			if err != nil {
+				fmt.Println(err)
+
+				return
+			}
+
+			fmt.Println("Shecan disconnected successfully.")
+
+			systrayUI.setIcon(false)
+			systrayUI.setToolTip("Not connected")
 		}
 
-		fmt.Println("Shecan set successfully.")
-
-		systrayUI.setIcon(true)
-		systrayUI.setToolTip("Connected to: Shecan")
-	}()
-
-	go func() {
-		<-menuReset.ClickedCh
-		dnsService := network.DnsService{}
-		_, err := dnsService.ChangeDns(network.Reset, systrayUI.dnsConfigurations[0])
-		if err != nil {
-			fmt.Println(err)
-
-			return
-		}
-
-		fmt.Println("Shecan disconnected successfully.")
-
-		systrayUI.setIcon(false)
-		systrayUI.setToolTip("Not connected")
 	}()
 
 	return nil

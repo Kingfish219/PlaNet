@@ -2,7 +2,7 @@
 
 <div align="left">
     <br />
-    <img src="src\assets\PlaNet.png" alt="Logo" width="80">
+    <img src="assets\PlaNet.png" alt="Logo" width="80">
     <br />
     <br />
 </div>
