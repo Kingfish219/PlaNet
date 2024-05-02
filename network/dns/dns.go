@@ -1,4 +1,4 @@
-package domain
+package dns
 
 type Dns struct {
 	Name         string `json:"name"`

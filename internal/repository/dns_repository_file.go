@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/Kingfish219/PlaNet/internal/domain"
+	"github.com/Kingfish219/PlaNet/network/dns"
 )
 
 type DnsRepositoryFile struct {
@@ -17,17 +17,17 @@ func NewDnsRepository(filePath string) *DnsRepositoryFile {
 	}
 }
 
-func (repo DnsRepositoryFile) GetDnsConfigurations() ([]domain.Dns, error) {
+func (repo DnsRepositoryFile) GetDnsConfigurations() ([]dns.Dns, error) {
 	file, err := os.ReadFile(repo.filePath)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(file) == 0 {
-		return []domain.Dns{}, nil
+		return []dns.Dns{}, nil
 	}
 
-	var dnsList []domain.Dns
+	var dnsList []dns.Dns
 	err = json.Unmarshal(file, &dnsList)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (repo DnsRepositoryFile) GetDnsConfigurations() ([]domain.Dns, error) {
 	return dnsList, nil
 }
 
-func (repo DnsRepositoryFile) ModifyDnsConfigurations(dns domain.Dns) (bool, error) {
+func (repo DnsRepositoryFile) ModifyDnsConfigurations(dns dns.Dns) (bool, error) {
 	dnsList, err := repo.GetDnsConfigurations()
 	if err != nil {
 		return false, err

@@ -1,4 +1,4 @@
-package network
+package ni
 
 import (
 	"bufio"
@@ -6,11 +6,9 @@ import (
 	"net"
 	"os/exec"
 	"strings"
-
-	"github.com/Kingfish219/PlaNet/internal/domain"
 )
 
-func getStaticIPConfiguration(interfaceName string) (bool, *domain.IPConfiguration, error) {
+func getStaticIPConfiguration(interfaceName string) (bool, *IPConfiguration, error) {
 	cmd := exec.Command("netsh", "interface", "ipv4", "show", "config", "name="+interfaceName)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -18,7 +16,7 @@ func getStaticIPConfiguration(interfaceName string) (bool, *domain.IPConfigurati
 	}
 
 	scanner := bufio.NewScanner(strings.NewReader(string(output)))
-	ipConfig := &domain.IPConfiguration{}
+	ipConfig := &IPConfiguration{}
 	read := false
 
 	for scanner.Scan() {
@@ -60,14 +58,14 @@ func getStaticIPConfiguration(interfaceName string) (bool, *domain.IPConfigurati
 	return true, ipConfig, nil
 }
 
-func setStaticIPConfiguration(interfaceName string, ipConfig *domain.IPConfiguration) error {
+func setStaticIPConfiguration(interfaceName string, ipConfig *IPConfiguration) error {
 	cmd := exec.Command("netsh", "interface", "ipv4", "set", "address", "name="+interfaceName,
 		"source=static", "addr="+ipConfig.IPAddress, "mask="+ipConfig.SubnetMask,
 		"gateway="+ipConfig.DefaultGateway)
 	return cmd.Run()
 }
 
-func getActiveNetworkInterface() ([]string, error) {
+func GetActiveNetworkInterface() ([]string, error) {
 	interfaces, err := net.Interfaces()
 	if err != nil {
 		fmt.Println("Error getting network interfaces:", err)

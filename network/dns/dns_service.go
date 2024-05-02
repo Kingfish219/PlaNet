@@ -1,15 +1,15 @@
-package network
+package dns
 
 import (
 	"errors"
 	"fmt"
 	"os/exec"
 
-	"github.com/Kingfish219/PlaNet/internal/domain"
+	"github.com/Kingfish219/PlaNet/network/ni"
 )
 
 type DnsService struct {
-	PreviousIPConfiguration domain.IPConfiguration
+	PreviousIPConfiguration ni.IPConfiguration
 }
 
 type DnsOperation int
@@ -19,8 +19,8 @@ const (
 	ResetDns
 )
 
-func (dnsService DnsService) ChangeDns(operation DnsOperation, dns domain.Dns) (bool, error) {
-	activeInterfaceNames, err := getActiveNetworkInterface()
+func (dnsService DnsService) ChangeDns(operation DnsOperation, dns Dns) (bool, error) {
+	activeInterfaceNames, err := ni.GetActiveNetworkInterface()
 	if activeInterfaceNames == nil || err != nil {
 		return false, err
 	}
@@ -29,7 +29,7 @@ func (dnsService DnsService) ChangeDns(operation DnsOperation, dns domain.Dns) (
 		return false, errors.New("no active network interface found")
 	}
 
-	currentIpConfig := domain.IPConfiguration{}
+	currentIpConfig := ni.IPConfiguration{}
 	var result bool
 
 	if operation == SetDns {

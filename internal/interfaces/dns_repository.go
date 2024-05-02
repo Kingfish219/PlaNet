@@ -1,8 +1,8 @@
 package interfaces
 
-import "github.com/Kingfish219/PlaNet/internal/domain"
+import "github.com/Kingfish219/PlaNet/network/dns"
 
 type DnsRepository interface {
-	GetDnsConfigurations() ([]domain.Dns, error)
-	ModifyDnsConfigurations(dns domain.Dns) (bool, error)
+	GetDnsConfigurations() ([]dns.Dns, error)
+	ModifyDnsConfigurations(dns dns.Dns) (bool, error)
 }

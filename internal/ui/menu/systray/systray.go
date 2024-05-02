@@ -4,18 +4,17 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Kingfish219/PlaNet/internal/domain"
 	"github.com/Kingfish219/PlaNet/internal/interfaces"
 	"github.com/Kingfish219/PlaNet/internal/presets"
-	"github.com/Kingfish219/PlaNet/network"
+	"github.com/Kingfish219/PlaNet/network/dns"
 	"github.com/getlantern/systray"
 )
 
 type SystrayUI struct {
 	dnsRepository             interfaces.DnsRepository
-	dnsConfigurations         []domain.Dns
-	selectedDnsConfiguration  domain.Dns
-	connectedDnsConfiguration domain.Dns
+	dnsConfigurations         []dns.Dns
+	selectedDnsConfiguration  dns.Dns
+	connectedDnsConfiguration dns.Dns
 }
 
 func New(dnsRepository interfaces.DnsRepository) *SystrayUI {
@@ -89,16 +88,16 @@ func (systrayUI *SystrayUI) addDnsConfigurations() error {
 	systrayUI.dnsConfigurations = dnsConfigurations
 
 	dnsConfigMenu := systray.AddMenuItem(fmt.Sprintf("DNS config: %v", systrayUI.dnsConfigurations[0].Name), "Selected DNS Configuration")
-	for _, dns := range systrayUI.dnsConfigurations {
-		dnsConfigSubMenu := dnsConfigMenu.AddSubMenuItem(dns.Name, dns.Name)
-		localDns := dns
+	for _, dnsConfig := range systrayUI.dnsConfigurations {
+		dnsConfigSubMenu := dnsConfigMenu.AddSubMenuItem(dnsConfig.Name, dnsConfig.Name)
+		localDns := dnsConfig
 
-		go func(localDns domain.Dns) {
+		go func(localDns dns.Dns) {
 			for {
 				<-dnsConfigSubMenu.ClickedCh
 				if systrayUI.connectedDnsConfiguration.Name != localDns.Name {
-					dnsService := network.DnsService{}
-					_, err := dnsService.ChangeDns(network.ResetDns, systrayUI.connectedDnsConfiguration)
+					dnsService := dns.DnsService{}
+					_, err := dnsService.ChangeDns(dns.ResetDns, systrayUI.connectedDnsConfiguration)
 					if err != nil {
 						fmt.Println(err)
 
@@ -120,8 +119,8 @@ func (systrayUI *SystrayUI) addDnsConfigurations() error {
 	go func() {
 		for {
 			<-menuSet.ClickedCh
-			dnsService := network.DnsService{}
-			_, err := dnsService.ChangeDns(network.SetDns, systrayUI.selectedDnsConfiguration)
+			dnsService := dns.DnsService{}
+			_, err := dnsService.ChangeDns(dns.SetDns, systrayUI.selectedDnsConfiguration)
 			if err != nil {
 				fmt.Println(err)
 
@@ -141,8 +140,8 @@ func (systrayUI *SystrayUI) addDnsConfigurations() error {
 			<-menuReset.ClickedCh
 			fmt.Println(systrayUI.selectedDnsConfiguration)
 
-			dnsService := network.DnsService{}
-			_, err := dnsService.ChangeDns(network.ResetDns, systrayUI.connectedDnsConfiguration)
+			dnsService := dns.DnsService{}
+			_, err := dnsService.ChangeDns(dns.ResetDns, systrayUI.connectedDnsConfiguration)
 			if err != nil {
 				fmt.Println(err)
 
