@@ -36,10 +36,10 @@ func (repo DnsRepositoryFile) GetDnsConfigurations() ([]dns.Dns, error) {
 	return dnsList, nil
 }
 
-func (repo DnsRepositoryFile) ModifyDnsConfigurations(dns dns.Dns) (bool, error) {
+func (repo DnsRepositoryFile) ModifyDnsConfigurations(dns dns.Dns) error {
 	dnsList, err := repo.GetDnsConfigurations()
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	dnsList = append(dnsList, dns)
@@ -47,13 +47,51 @@ func (repo DnsRepositoryFile) ModifyDnsConfigurations(dns dns.Dns) (bool, error)
 
 	jsonData, err = json.Marshal(dnsList)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	err = os.WriteFile(repo.filePath, jsonData, 0644)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	return true, nil
+	return nil
+}
+
+func (repo DnsRepositoryFile) DeleteDnsConfigurations(dns dns.Dns) error {
+	dnsList, err := repo.GetDnsConfigurations()
+	if err != nil {
+		return err
+	}
+
+	if targetDnsIndex, err := repo.GetDnsIndex(dns); err == nil {
+		dnsList = append(dnsList[:targetDnsIndex], dnsList[targetDnsIndex+1:]...)
+	}
+
+	var jsonData []byte
+
+	jsonData, err = json.Marshal(dnsList)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(repo.filePath, jsonData, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo DnsRepositoryFile) GetDnsIndex(dns dns.Dns) (int, error) {
+	dnsList, err := repo.GetDnsConfigurations()
+	if err != nil {
+		return 0, err
+	}
+	for index, item := range dnsList {
+		if item.Name == dns.Name {
+			return index, nil
+		}
+	}
+	return 0, err
 }
