@@ -2,6 +2,6 @@ package ui
 
 type Page struct {
 	Title    string
-	Actions  []Action
+	Items    []Item
 	Initiate func()
 }
