@@ -13,7 +13,7 @@ func FeedMainPage(console *ConsoleUI) {
 func MainPage() ui.Page {
 	return ui.Page{
 		Actions: []ui.Action{
-			ui.Action{
+			{
 				Title: "DNS Management",
 				Exec: func() {
 					fmt.Println("Test")
