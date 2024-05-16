@@ -1,6 +1,7 @@
 package ui
 
-type Action struct {
+type Item struct {
 	Title string
+	Page  Page
 	Exec  func()
 }

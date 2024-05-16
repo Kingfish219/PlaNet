@@ -53,7 +53,7 @@ func (console *ConsoleUI) drawLogo() {
 }
 
 func (console *ConsoleUI) addActions() {
-	for index, action := range console.ActivePage.Actions {
+	for index, action := range console.ActivePage.Items {
 		fmt.Println(fmt.Sprint(index+1)+".", action.Title)
 	}
 }
