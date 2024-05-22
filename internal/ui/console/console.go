@@ -2,11 +2,11 @@ package console
 
 import (
 	"fmt"
-	"os"
 
 	"atomicgo.dev/keyboard"
 	"atomicgo.dev/keyboard/keys"
 	"github.com/Kingfish219/PlaNet/internal/ui"
+	"github.com/inancgumus/screen"
 )
 
 type ConsoleUI struct {
@@ -20,40 +20,56 @@ func New() *ConsoleUI {
 
 func (console *ConsoleUI) Initialize() error {
 	console.drawLogo()
-	FeedMainPage(console)
+	FeedUI(console)
 
 	fmt.Println()
-	_, err := fmt.Println("What do you want to do?")
-	console.addActions()
-	console.captureKeyboard()
+	fmt.Println("What do you want to do?")
+	console.buildActivePage()
 
-	return err
+	return nil
 }
 
-func (console *ConsoleUI) captureKeyboard() {
-	keyboard.Listen(func(key keys.Key) (stop bool, err error) {
-		switch key.Code {
-		case keys.CtrlC:
-			os.Exit(0)
-			return true, nil
-		case keys.RuneKey:
-			fmt.Printf("\rYou pressed the rune key: %s\n", key)
-		default:
-			fmt.Printf("\rYou pressed: %s\n", key)
-		}
+func (console *ConsoleUI) buildActivePage() {
+	console.clearConsole()
+	console.drawLogo()
+	console.buildUI(console.ActivePage)
+	console.buildKeyboard(console.ActivePage)
+}
 
-		return false, nil
-	})
+func (console *ConsoleUI) clearConsole() {
+	screen.Clear()
+	screen.MoveTopLeft()
 }
 
 func (console *ConsoleUI) drawLogo() {
+	fmt.Println()
 	fmt.Println("=======================================")
-	fmt.Println("           Welcome to PlaNet           ")
+	fmt.Println("                PlaNet                 ")
 	fmt.Println("=======================================")
+	fmt.Println()
 }
 
-func (console *ConsoleUI) addActions() {
-	for index, action := range console.ActivePage.Items {
-		fmt.Println(fmt.Sprint(index+1)+".", action.Title)
+func (console *ConsoleUI) buildUI(page ui.Page) {
+	fmt.Println(page.Title)
+	fmt.Println()
+	for _, action := range page.Items {
+		fmt.Println(action.Title)
 	}
+}
+
+func (console *ConsoleUI) buildKeyboard(page ui.Page) {
+	keyboard.Listen(func(key keys.Key) (stop bool, err error) {
+		for _, item := range page.Items {
+			if item.ShortKey == key.String() {
+				if item.Page.Key == "" {
+					console.ActivePage = item.Page
+					console.buildActivePage()
+				} else {
+					item.Exec()
+				}
+			}
+		}
+
+		return true, nil
+	})
 }
