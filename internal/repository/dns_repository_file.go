@@ -87,22 +87,12 @@ func (repo *DnsRepositoryFile) ModifyActiveDnsConfiguration(dns.Dns) error {
 }
 
 func (repo *DnsRepositoryFile) GetDnsConfigurations() ([]dns.Dns, error) {
-	file, err := os.ReadFile(repo.filePath)
+	file, err := repo.ReadDb()
 	if err != nil {
 		return nil, err
 	}
 
-	if len(file) == 0 {
-		return []dns.Dns{}, nil
-	}
-
-	var dnsList []dns.Dns
-	err = json.Unmarshal(file, &dnsList)
-	if err != nil {
-		return nil, err
-	}
-
-	return dnsList, nil
+	return file.DnsConfigurations, nil
 }
 
 func (repo *DnsRepositoryFile) ModifyDnsConfigurations(dns dns.Dns) error {

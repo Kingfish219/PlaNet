@@ -6,8 +6,8 @@ import (
 	"github.com/Kingfish219/PlaNet/internal/ui"
 )
 
-func Exit() ui.Page {
-	return ui.Page{
+func Exit() *ui.Page {
+	return &ui.Page{
 		Key:   "c_exit",
 		Title: "Goodbye...",
 		Initiate: func() {

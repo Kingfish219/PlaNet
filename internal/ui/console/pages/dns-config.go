@@ -8,10 +8,18 @@ import (
 	"github.com/Kingfish219/PlaNet/internal/ui"
 )
 
-func DnsConfig(repo interfaces.DnsRepository) ui.Page {
+func DnsConfig(repo interfaces.DnsRepository) *ui.Page {
+	fmt.Println("tttttttttttttttttttt")
+	fmt.Println("tttttttttttttttttttt")
+	fmt.Println("tttttttttttttttttttt")
+	fmt.Println("tttttttttttttttttttt")
+	fmt.Println("tttttttttttttttttttt")
+
 	dnsConfigurations, err := repo.GetDnsConfigurations()
 	if err != nil {
-		return ui.Page{}
+		fmt.Println(err)
+
+		return &ui.Page{}
 	}
 
 	items := []ui.Item{}
@@ -25,7 +33,7 @@ func DnsConfig(repo interfaces.DnsRepository) ui.Page {
 		})
 	}
 
-	return ui.Page{
+	return &ui.Page{
 		Key:   "c_dnsconfig",
 		Title: "Select ",
 		Items: items,

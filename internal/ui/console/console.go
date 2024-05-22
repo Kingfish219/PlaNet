@@ -27,7 +27,6 @@ func New(dnsRepository interfaces.DnsRepository) *ConsoleUI {
 func (console *ConsoleUI) Initialize() error {
 	console.drawLogo()
 	page := FeedUI(console)
-
 	fmt.Println()
 	fmt.Println("What do you want to do?")
 	console.BuildPage(page)
@@ -36,7 +35,7 @@ func (console *ConsoleUI) Initialize() error {
 }
 
 func (console *ConsoleUI) BuildPage(page *ui.Page) {
-	console.clearConsole()
+	// console.clearConsole()
 	console.drawLogo()
 	console.buildUI(page)
 	console.buildKeyboard(page)
@@ -76,7 +75,7 @@ func (console *ConsoleUI) buildKeyboard(page *ui.Page) {
 		for _, item := range page.Items {
 			if item.ShortKey == key.String() {
 				if item.Page.Key != "" {
-					console.BuildPage(&item.Page)
+					console.BuildPage(item.Page)
 				} else {
 					item.Exec()
 				}
