@@ -101,7 +101,19 @@ func (repo *DnsRepositoryFile) ModifyDnsConfigurations(dns dns.Dns) error {
 		return err
 	}
 
-	dnsList = append(dnsList, dns)
+	existedIndex := -1
+	for index, d := range dnsList {
+		if d.Name == dns.Name {
+			existedIndex = index
+		}
+	}
+
+	if existedIndex > -1 {
+		dnsList[existedIndex] = dns
+	} else {
+		dnsList = append(dnsList, dns)
+	}
+
 	fileDb, err := repo.ReadDb()
 	if err != nil {
 		return err

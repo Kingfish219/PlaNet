@@ -9,12 +9,6 @@ import (
 )
 
 func DnsConfig(repo interfaces.DnsRepository) *ui.Page {
-	fmt.Println("tttttttttttttttttttt")
-	fmt.Println("tttttttttttttttttttt")
-	fmt.Println("tttttttttttttttttttt")
-	fmt.Println("tttttttttttttttttttt")
-	fmt.Println("tttttttttttttttttttt")
-
 	dnsConfigurations, err := repo.GetDnsConfigurations()
 	if err != nil {
 		fmt.Println(err)
@@ -35,7 +29,7 @@ func DnsConfig(repo interfaces.DnsRepository) *ui.Page {
 
 	return &ui.Page{
 		Key:   "c_dnsconfig",
-		Title: "Select ",
+		Title: "Select a config:",
 		Items: items,
 	}
 }

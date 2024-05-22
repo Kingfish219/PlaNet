@@ -35,7 +35,7 @@ func (console *ConsoleUI) Initialize() error {
 }
 
 func (console *ConsoleUI) BuildPage(page *ui.Page) {
-	// console.clearConsole()
+	console.clearConsole()
 	console.drawLogo()
 	console.buildUI(page)
 	console.buildKeyboard(page)
