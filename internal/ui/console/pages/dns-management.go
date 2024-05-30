@@ -8,15 +8,16 @@ import (
 	"github.com/Kingfish219/PlaNet/network/dns"
 )
 
-func DnsManagement(repo interfaces.DnsRepository) *ui.Page {
+func DnsManagement(parent *ui.Page, repo interfaces.DnsRepository) *ui.Page {
 	activeDnsConfig, err := repo.GetActiveDnsConfiguration()
 	if err != nil {
 		return &ui.Page{}
 	}
 
 	return &ui.Page{
-		Key:   "c_dns",
-		Title: "DNS Management",
+		Key:    "c_dns",
+		Title:  "DNS Management",
+		Parent: parent,
 		Items: []ui.Item{
 			{
 				Key:      "c_dns_config",

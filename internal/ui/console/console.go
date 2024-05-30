@@ -10,12 +10,13 @@ import (
 	"atomicgo.dev/keyboard/keys"
 	"github.com/Kingfish219/PlaNet/internal/interfaces"
 	"github.com/Kingfish219/PlaNet/internal/ui"
+	"github.com/Kingfish219/PlaNet/internal/ui/console/pages"
 )
 
 type ConsoleUI struct {
 	Name          string
 	ActivePage    *ui.Page
-	PreviousPage  *ui.Page
+	ExitFunc      func()
 	dnsRepository interfaces.DnsRepository
 }
 
@@ -28,11 +29,7 @@ func New(dnsRepository interfaces.DnsRepository) *ConsoleUI {
 func (console *ConsoleUI) Initialize() error {
 	console.drawLogo()
 	page := FeedUI(console)
-	fmt.Println()
-	fmt.Println("What do you want to do?")
 	console.BuildPage(page)
-	fmt.Println()
-	fmt.Println("0. Back")
 
 	return nil
 }
@@ -47,14 +44,16 @@ func (console *ConsoleUI) Consume(command string) error {
 }
 
 func (console *ConsoleUI) BuildPage(page *ui.Page) {
-	console.PreviousPage = console.ActivePage
 	console.ActivePage = page
 
 	console.clearConsole()
 	console.drawLogo()
 	console.buildUI(page)
+	if page.Initiate != nil {
+		page.Initiate()
+	}
+
 	console.buildKeyboard(page)
-	page.Initiate()
 }
 
 func (console *ConsoleUI) clearConsole() {
@@ -67,6 +66,14 @@ func (console *ConsoleUI) clearConsole() {
 		cmd.Stdout = os.Stdout
 		cmd.Run()
 	}
+}
+
+func (console *ConsoleUI) setBackKey() {
+	console.BuildPage(console.ActivePage.Parent)
+}
+
+func (console *ConsoleUI) setExitKey() {
+	console.BuildPage(pages.Exit())
 }
 
 func (console *ConsoleUI) drawLogo() {
@@ -84,9 +91,14 @@ func (console *ConsoleUI) buildUI(page *ui.Page) {
 		fmt.Println(action.Title)
 	}
 
-	if console.PreviousPage != nil {
+	if page.Parent != nil {
 		fmt.Println()
 		fmt.Println("0. Back")
+		console.ExitFunc = console.setBackKey
+	} else {
+		fmt.Println()
+		fmt.Println("0. Exit")
+		console.ExitFunc = console.setExitKey
 	}
 }
 
@@ -102,9 +114,8 @@ func (console *ConsoleUI) buildKeyboard(page *ui.Page) {
 			}
 		}
 
-		if key.String() == "5" {
-			fmt.Println()
-			fmt.Printf("%v. Back", len(page.Items)+1)
+		if key.String() == "0" {
+			console.ExitFunc()
 		}
 
 		return true, nil
