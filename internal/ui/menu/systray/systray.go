@@ -67,6 +67,10 @@ func (systrayUI *SystrayUI) setToolTip(toolTip string) {
 	systray.SetTooltip("PlaNet:\n" + toolTip)
 }
 
+func (console *SystrayUI) Consume(command string) error {
+	return nil
+}
+
 func (systrayUI *SystrayUI) addDnsConfigurations() error {
 	dnsConfigurations, err := systrayUI.dnsRepository.GetDnsConfigurations()
 	if err != nil {

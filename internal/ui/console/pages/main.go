@@ -31,12 +31,12 @@ func Main(repo interfaces.DnsRepository) *ui.Page {
 				Title:    "3. Tools",
 				ShortKey: "3",
 			},
-			{
-				Key:      "c_main_exit",
-				Title:    "0. Exit",
-				ShortKey: "0",
-				Page:     Exit(),
-			},
+			// {
+			// 	Key:      "c_main_exit",
+			// 	Title:    "0. Exit",
+			// 	ShortKey: "0",
+			// 	Page:     Exit(),
+			// },
 		},
 	}
 }

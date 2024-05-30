@@ -17,10 +17,10 @@ func DnsConfig(repo interfaces.DnsRepository) *ui.Page {
 	}
 
 	items := []ui.Item{}
-	for _, dns := range dnsConfigurations {
+	for index, dns := range dnsConfigurations {
 		items = append(items, ui.Item{
 			Key:   fmt.Sprintf("c_dnsconfig_%v", strings.ReplaceAll(dns.Name, " ", "")),
-			Title: dns.Name,
+			Title: fmt.Sprintf("%v. %s (%s, %s)", index+1, dns.Name, dns.PrimaryDns, dns.SecendaryDns),
 			Exec: func() {
 				repo.ModifyActiveDnsConfiguration(dns)
 			},

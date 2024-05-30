@@ -15,6 +15,7 @@ import (
 type ConsoleUI struct {
 	Name          string
 	ActivePage    *ui.Page
+	PreviousPage  *ui.Page
 	dnsRepository interfaces.DnsRepository
 }
 
@@ -30,11 +31,25 @@ func (console *ConsoleUI) Initialize() error {
 	fmt.Println()
 	fmt.Println("What do you want to do?")
 	console.BuildPage(page)
+	fmt.Println()
+	fmt.Println("0. Back")
+
+	return nil
+}
+
+func (console *ConsoleUI) Consume(command string) error {
+	switch command {
+	case "new-config":
+		break
+	}
 
 	return nil
 }
 
 func (console *ConsoleUI) BuildPage(page *ui.Page) {
+	console.PreviousPage = console.ActivePage
+	console.ActivePage = page
+
 	console.clearConsole()
 	console.drawLogo()
 	console.buildUI(page)
@@ -68,6 +83,11 @@ func (console *ConsoleUI) buildUI(page *ui.Page) {
 	for _, action := range page.Items {
 		fmt.Println(action.Title)
 	}
+
+	if console.PreviousPage != nil {
+		fmt.Println()
+		fmt.Println("0. Back")
+	}
 }
 
 func (console *ConsoleUI) buildKeyboard(page *ui.Page) {
@@ -80,6 +100,11 @@ func (console *ConsoleUI) buildKeyboard(page *ui.Page) {
 					item.Exec()
 				}
 			}
+		}
+
+		if key.String() == "5" {
+			fmt.Println()
+			fmt.Printf("%v. Back", len(page.Items)+1)
 		}
 
 		return true, nil

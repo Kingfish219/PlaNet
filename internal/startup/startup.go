@@ -7,6 +7,7 @@ import (
 
 	"github.com/Kingfish219/PlaNet/internal/interfaces"
 	"github.com/Kingfish219/PlaNet/internal/presets"
+	"github.com/Kingfish219/PlaNet/internal/publisher"
 	"github.com/Kingfish219/PlaNet/internal/repository"
 	"github.com/Kingfish219/PlaNet/internal/ui/console"
 	"github.com/Kingfish219/PlaNet/internal/ui/menu/systray"
@@ -31,11 +32,15 @@ func (startup *Startup) Initialize() error {
 	dnsRepository := repository.NewDnsRepository(repoFilePath)
 	startup.migrateDb(dnsRepository)
 
-	console := console.New(dnsRepository)
-	startup.userInterfaces = append(startup.userInterfaces, console)
+	publisher := publisher.Publisher{}
 
 	systray := systray.New(dnsRepository)
 	startup.userInterfaces = append(startup.userInterfaces, systray)
+	publisher.UISubscribers = append(publisher.UISubscribers, systray)
+
+	console := console.New(dnsRepository)
+	startup.userInterfaces = append(startup.userInterfaces, console)
+	publisher.UISubscribers = append(publisher.UISubscribers, console)
 
 	return nil
 }
