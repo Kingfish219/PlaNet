@@ -53,6 +53,16 @@ func (console *ConsoleUI) BuildPage(page *ui.Page) {
 		page.Initiate()
 	}
 
+	if page.Parent != nil {
+		fmt.Println()
+		fmt.Println("0. Back")
+		console.ExitFunc = console.setBackKey
+	} else {
+		fmt.Println()
+		fmt.Println("0. Exit")
+		console.ExitFunc = console.setExitKey
+	}
+
 	console.buildKeyboard(page)
 }
 
@@ -87,18 +97,12 @@ func (console *ConsoleUI) drawLogo() {
 func (console *ConsoleUI) buildUI(page *ui.Page) {
 	fmt.Println(page.Title)
 	fmt.Println()
-	for _, action := range page.Items {
-		fmt.Println(action.Title)
+	if page.Items == nil {
+		return
 	}
 
-	if page.Parent != nil {
-		fmt.Println()
-		fmt.Println("0. Back")
-		console.ExitFunc = console.setBackKey
-	} else {
-		fmt.Println()
-		fmt.Println("0. Exit")
-		console.ExitFunc = console.setExitKey
+	for _, action := range page.Items {
+		fmt.Println(action.Title)
 	}
 }
 
@@ -106,8 +110,10 @@ func (console *ConsoleUI) buildKeyboard(page *ui.Page) {
 	keyboard.Listen(func(key keys.Key) (stop bool, err error) {
 		for _, item := range page.Items {
 			if item.ShortKey == key.String() {
-				if item.Page.Key != "" {
-					console.BuildPage(item.Page)
+				if item.Page != nil {
+					if item.Page.Key != "" {
+						console.BuildPage(item.Page)
+					}
 				} else {
 					item.Exec()
 				}
@@ -118,6 +124,6 @@ func (console *ConsoleUI) buildKeyboard(page *ui.Page) {
 			console.ExitFunc()
 		}
 
-		return true, nil
+		return false, nil
 	})
 }

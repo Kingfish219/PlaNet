@@ -3,27 +3,29 @@ package pages
 import (
 	"fmt"
 
+	"github.com/Kingfish219/PlaNet/internal/common"
 	"github.com/Kingfish219/PlaNet/internal/interfaces"
 	"github.com/Kingfish219/PlaNet/internal/ui"
 	"github.com/Kingfish219/PlaNet/network/dns"
 )
 
 func DnsManagement(parent *ui.Page, repo interfaces.DnsRepository) *ui.Page {
-	activeDnsConfig, err := repo.GetActiveDnsConfiguration()
+	selectedDnsConfig, err := repo.GetSelectedDnsConfiguration()
 	if err != nil {
 		return &ui.Page{}
 	}
 
-	return &ui.Page{
+	planetConf := common.GetConfigurations()
+
+	page := &ui.Page{
 		Key:    "c_dns",
 		Title:  "DNS Management",
 		Parent: parent,
 		Items: []ui.Item{
 			{
 				Key:      "c_dns_config",
-				Title:    fmt.Sprintf("1. Config: %v", activeDnsConfig.Name),
+				Title:    fmt.Sprintf("1. Config: %v", selectedDnsConfig.Name),
 				ShortKey: "1",
-				Page:     DnsConfig(repo),
 			},
 			{
 				Key:      "c_dns_set",
@@ -31,7 +33,10 @@ func DnsManagement(parent *ui.Page, repo interfaces.DnsRepository) *ui.Page {
 				ShortKey: "2",
 				Exec: func() {
 					dnsService := dns.DnsService{}
-					dnsService.ChangeDns(dns.SetDns, activeDnsConfig)
+					_, err := dnsService.ChangeDns(dns.SetDns, selectedDnsConfig)
+					if err == nil {
+						planetConf.ActiveDns = &selectedDnsConfig
+					}
 				},
 			},
 			{
@@ -40,14 +45,21 @@ func DnsManagement(parent *ui.Page, repo interfaces.DnsRepository) *ui.Page {
 				ShortKey: "3",
 				Exec: func() {
 					dnsService := dns.DnsService{}
-					dnsService.ChangeDns(dns.ResetDns, activeDnsConfig)
+					_, err := dnsService.ChangeDns(dns.ResetDns, selectedDnsConfig)
+					if err == nil {
+						planetConf.ActiveDns = nil
+					}
 				},
 			},
 			{
 				Key:      "c_dns_delete",
-				Title:    fmt.Sprintf("4. Delete selected config: %v", activeDnsConfig.Name),
+				Title:    fmt.Sprintf("4. Delete selected config: %v", selectedDnsConfig.Name),
 				ShortKey: "4",
 			},
 		},
 	}
+
+	page.Items[0].Page = DnsConfig(page, repo)
+
+	return page
 }
