@@ -17,11 +17,11 @@ func Feed(systray *SystrayUI) error {
 	return nil
 }
 
-func pages(systray *SystrayUI) ui.Page {
+func pages(systray *SystrayUI) *ui.Page {
 
-	dnsPage := NewDnsPage(systray, "systray_main_dns")
+	dnsPage := NewDnsPage(systray)
 
-	return ui.Page{
+	return &ui.Page{
 		Key: "systray_main",
 		Items: []ui.Item{
 			{
@@ -32,13 +32,13 @@ func pages(systray *SystrayUI) ui.Page {
 			{
 				Title: "Network Interface Management",
 				Exec: func() {
-					fmt.Println("Test")
+					fmt.Println("Network Interface Management")
 				},
 			},
 			{
 				Title: "Tools",
 				Exec: func() {
-					fmt.Println("Test")
+					fmt.Println("Tools")
 				},
 			},
 			{

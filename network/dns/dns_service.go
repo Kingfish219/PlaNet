@@ -58,7 +58,6 @@ func (dnsService DnsService) ChangeDns(operation DnsOperation, dns Dns) (bool, e
 		// 	fmt.Println(currentIpConfig)
 		// 	setStaticIPConfiguration(activeInterfaceName, &currentIpConfig)
 		// }
-
 		return result, err
 	}
 }

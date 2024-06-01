@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/Kingfish219/PlaNet/internal/interfaces"
+	"github.com/Kingfish219/PlaNet/internal/presets"
 	"github.com/Kingfish219/PlaNet/internal/repository"
 	"github.com/Kingfish219/PlaNet/internal/ui/console"
 	"github.com/Kingfish219/PlaNet/internal/ui/menu/systray"
@@ -28,12 +29,16 @@ func (startup *Startup) Initialize() error {
 	}
 
 	dnsRepository := repository.NewDnsRepository(repoFilePath)
-
-	console := console.New()
-	startup.userInterfaces = append(startup.userInterfaces, console)
+	err = startup.migrateDb(dnsRepository)
+	if err != nil {
+		return err
+	}
 
 	systray := systray.New(dnsRepository)
 	startup.userInterfaces = append(startup.userInterfaces, systray)
+
+	console := console.New(dnsRepository)
+	startup.userInterfaces = append(startup.userInterfaces, console)
 
 	return nil
 }
@@ -60,7 +65,7 @@ func (startup *Startup) createRepoFilePath() (string, error) {
 		return "", err
 	}
 
-	repoFilePath := filepath.Join(planetTempDirPath, "dns_config.json")
+	repoFilePath := filepath.Join(planetTempDirPath, "config.json")
 	_, err = os.Stat(repoFilePath)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
@@ -74,4 +79,18 @@ func (startup *Startup) createRepoFilePath() (string, error) {
 	}
 
 	return repoFilePath, nil
+}
+
+func (startup *Startup) migrateDb(repository interfaces.DnsRepository) error {
+	dnsConfigurations, err := repository.GetDnsConfigurations()
+	if err != nil {
+		return err
+	}
+	if len(dnsConfigurations) == 0 {
+		presetDnsList := presets.GetDnsPresets()
+		for _, pre := range presetDnsList {
+			repository.ModifyDnsConfigurations(pre)
+		}
+	}
+	return nil
 }

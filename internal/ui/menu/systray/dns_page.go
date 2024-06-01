@@ -9,57 +9,51 @@ import (
 )
 
 type DnsPage struct {
-	systray        *SystrayUI
-	key            string
-	SetConfigTitle func(string)
+	systray *SystrayUI
 }
 
-func NewDnsPage(systray *SystrayUI, key string) *DnsPage {
+func NewDnsPage(systray *SystrayUI) *DnsPage {
 	return &DnsPage{
 		systray: systray,
-		key:     key,
 	}
 }
 
-func (dnsConfig *DnsPage) Initialize() ui.Page {
+func (dnsConfig *DnsPage) Initialize() *ui.Page {
 
-	dnsConfigPage := NewDnsConfigPage(dnsConfig.systray, dnsConfig.key+"_config")
+	dnsConfigPage := NewDnsConfigPage(dnsConfig.systray)
 
 	itemList := []ui.Item{
 		{
-			Key:   dnsConfig.key + "_config",
+			Key:   "systray_main_dns_config",
 			Title: "Config",
 			Page:  dnsConfigPage.Initialize(),
 		},
 		{
-			Key:   dnsConfig.key + "_set",
+			Key:   "systray_main_dns_set",
 			Title: "Set",
 			Exec: func() {
-				fmt.Print("Set")
 				setConfig(dnsConfig.systray)
 			},
 		},
 		{
-			Key:   dnsConfig.key + "_reset",
+			Key:   "systray_main_dns_reset",
 			Title: "Reset",
 			Exec: func() {
-				fmt.Print("Reset")
 				resetConfig(dnsConfig.systray)
 			},
 		},
 		{
-			Key:   dnsConfig.key + "_delete",
+			Key:   "systray_main_dns_delete",
 			Title: "Delete This Config",
 			Exec: func() {
-				fmt.Print("Delte")
 				deleteConfig(dnsConfig.systray)
 
 			},
 		},
 	}
 
-	return ui.Page{
-		Key:   dnsConfig.key,
+	return &ui.Page{
+		Key:   "systray_main_dns",
 		Items: itemList,
 	}
 }
@@ -67,7 +61,7 @@ func (dnsConfig *DnsPage) Initialize() ui.Page {
 func deleteConfig(systrayUI *SystrayUI) {
 	activeInterfaceNames, err := ni.GetActiveNetworkInterface()
 	if activeInterfaceNames == nil || err != nil {
-		fmt.Println(err)
+		fmt.Printf("Error: %v \n", err)
 
 		return
 	}
@@ -81,17 +75,17 @@ func deleteConfig(systrayUI *SystrayUI) {
 	var targetDns = systrayUI.selectedDnsConfiguration
 	err = systrayUI.dnsRepository.DeleteDnsConfigurations(systrayUI.selectedDnsConfiguration)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("Error: %v \n", err)
 		return
 	}
 
-	for key, item := range systrayUI.DnsMenus {
-		if key == targetDns.Name {
+	for key, item := range systrayUI.SystrayMenuItem {
+		if key == "systray_main_dns_config_"+targetDns.Name {
 			item.Hide()
 			//dnsConfigMenu.SetTitle("DNS config: -")
 		}
 	}
-	delete(systrayUI.DnsMenus, targetDns.Name)
+	delete(systrayUI.SystrayMenuItem, "systray_main_dns_config_"+targetDns.Name)
 	dnsService := dns.DnsService{}
 	_, err = dnsService.ChangeDns(dns.ResetDns, systrayUI.connectedDnsConfiguration)
 	if err != nil {
@@ -107,9 +101,8 @@ func deleteConfig(systrayUI *SystrayUI) {
 }
 
 func resetConfig(systrayUI *SystrayUI) {
-	fmt.Println(systrayUI.selectedDnsConfiguration)
-	fmt.Println("dnsMenu", systrayUI.DnsMenus)
 	dnsService := dns.DnsService{}
+	conectedDnsName := systrayUI.connectedDnsConfiguration.Name
 	_, err := dnsService.ChangeDns(dns.ResetDns, systrayUI.connectedDnsConfiguration)
 	if err != nil {
 		fmt.Println(err)
@@ -117,7 +110,7 @@ func resetConfig(systrayUI *SystrayUI) {
 		return
 	}
 
-	fmt.Println("Shecan disconnected successfully.")
+	fmt.Println(conectedDnsName + " disconnected successfully.")
 
 	systrayUI.setIcon(false)
 	systrayUI.setToolTip("Not connected")
@@ -126,15 +119,16 @@ func resetConfig(systrayUI *SystrayUI) {
 
 func setConfig(systrayUI *SystrayUI) {
 	dnsService := dns.DnsService{}
+	conectedDnsName := systrayUI.connectedDnsConfiguration.Name
 	_, err := dnsService.ChangeDns(dns.SetDns, systrayUI.selectedDnsConfiguration)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("Error ChangeDns: %v \n", err)
 
 		return
 	}
 
-	fmt.Println("Shecan set successfully.")
+	fmt.Println(conectedDnsName + " set successfully.")
 
 	systrayUI.setIcon(true)
-	systrayUI.setToolTip("Connected to: Shecan")
+	systrayUI.setToolTip("Connected to: " + conectedDnsName)
 }
