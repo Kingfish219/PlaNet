@@ -76,7 +76,6 @@ func (systray *SystrayUI) Consume(command string) error {
 	case "new-config":
 		systray.refreshConfigsMenu()
 		fmt.Println("systray new config")
-		break
 	}
 	return nil
 }

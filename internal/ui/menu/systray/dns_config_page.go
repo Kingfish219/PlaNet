@@ -26,7 +26,7 @@ func (dnsConfig *DnsConfigPage) Initialize() *ui.Page {
 			Key:   "systray_main_dns_config_new",
 			Title: "Add New Config",
 			Exec: func() {
-				addNewConfig(dnsConfig.systray, "systray_main_dns_config")
+				addNewConfig(dnsConfig.systray)
 			},
 		},
 	}
@@ -73,7 +73,7 @@ func DnsConfigOnClick(systray *SystrayUI, localDns dns.Dns, configKey string) { 
 	systray.selectedDnsConfiguration = localDns
 }
 
-func addNewConfig(systray *SystrayUI, key string) {
+func addNewConfig(systray *SystrayUI) {
 
 	console := console.New(systray.dnsRepository)
 	publisher := publisher.Publisher{}
