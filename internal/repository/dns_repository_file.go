@@ -136,9 +136,18 @@ func (repo DnsRepositoryFile) DeleteDnsConfigurations(dns dns.Dns) error {
 		dnsList = append(dnsList[:targetDnsIndex], dnsList[targetDnsIndex+1:]...)
 	}
 
-	var jsonData []byte
+	fileDb, err := repo.ReadDb()
+	if err != nil {
+		return err
+	}
 
-	jsonData, err = json.Marshal(dnsList)
+	fileDb.DnsConfigurations = dnsList
+	if fileDb.ActiveDns.Name == "" {
+		fileDb.ActiveDns = dnsList[0]
+	}
+
+	var jsonData []byte
+	jsonData, err = json.Marshal(fileDb)
 	if err != nil {
 		return err
 	}

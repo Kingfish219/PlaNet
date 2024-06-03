@@ -28,18 +28,20 @@ func DnsManagement(repo interfaces.DnsRepository) *ui.Page {
 				Key:      "c_dns_set",
 				Title:    "2. Set",
 				ShortKey: "2",
-				Exec: func() {
+				Exec: func() any {
 					dnsService := dns.DnsService{}
 					dnsService.ChangeDns(dns.SetDns, activeDnsConfig)
+					return nil
 				},
 			},
 			{
 				Key:      "c_dns_reset",
 				Title:    "3. Reset",
 				ShortKey: "3",
-				Exec: func() {
+				Exec: func() any {
 					dnsService := dns.DnsService{}
 					dnsService.ChangeDns(dns.ResetDns, activeDnsConfig)
+					return nil
 				},
 			},
 			{

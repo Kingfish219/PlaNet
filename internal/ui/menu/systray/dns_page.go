@@ -31,23 +31,25 @@ func (dnsConfig *DnsPage) Initialize() *ui.Page {
 		{
 			Key:   "systray_main_dns_set",
 			Title: "Set",
-			Exec: func() {
+			Exec: func() any {
 				setConfig(dnsConfig.systray)
+				return nil
 			},
 		},
 		{
 			Key:   "systray_main_dns_reset",
 			Title: "Reset",
-			Exec: func() {
+			Exec: func() any {
 				resetConfig(dnsConfig.systray)
+				return nil
 			},
 		},
 		{
 			Key:   "systray_main_dns_delete",
 			Title: "Delete This Config",
-			Exec: func() {
+			Exec: func() any {
 				deleteConfig(dnsConfig.systray)
-
+				return nil
 			},
 		},
 	}
@@ -95,7 +97,7 @@ func deleteConfig(systrayUI *SystrayUI) {
 	}
 
 	fmt.Println(targetDns.Name + " deleted successfully.")
-
+	systrayUI.SystrayMenuItem["systray_main_dns_config"].SetTitle("Config")
 	systrayUI.setIcon(false)
 	systrayUI.setToolTip("Not connected")
 }
@@ -119,11 +121,10 @@ func resetConfig(systrayUI *SystrayUI) {
 
 func setConfig(systrayUI *SystrayUI) {
 	dnsService := dns.DnsService{}
-	conectedDnsName := systrayUI.connectedDnsConfiguration.Name
+	conectedDnsName := systrayUI.selectedDnsConfiguration.Name
 	_, err := dnsService.ChangeDns(dns.SetDns, systrayUI.selectedDnsConfiguration)
 	if err != nil {
 		fmt.Printf("Error ChangeDns: %v \n", err)
-
 		return
 	}
 

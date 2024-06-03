@@ -22,12 +22,9 @@ func (dnsConfig *DnsConfigPage) Initialize() *ui.Page {
 		{
 			Key:   "systray_main_dns_config_new",
 			Title: "Add New Config",
-			Exec: func() {
-				//fmt.Print("Hiiii")
-			},
-			Exec2: func() any {
-				vvv := addNewConfig(dnsConfig.systray, "systray_main_dns_config")
-				return vvv
+			Exec: func() any {
+				uiItem := addNewConfig(dnsConfig.systray, "systray_main_dns_config")
+				return uiItem
 			},
 		},
 	}
@@ -43,9 +40,10 @@ func (dnsConfig *DnsConfigPage) Initialize() *ui.Page {
 func getExtistedConfig(systrayUI *SystrayUI, key string) []ui.Item {
 	configsList := []ui.Item{}
 	for _, dnsConfig := range systrayUI.dnsConfigurations {
-		exec := func(config dns.Dns) func() {
-			return func() {
+		exec := func(config dns.Dns) func() any {
+			return func() any {
 				DnsConfigOnClick(systrayUI, config, key)
+				return nil
 			}
 		}(dnsConfig)
 
@@ -61,18 +59,17 @@ func getExtistedConfig(systrayUI *SystrayUI, key string) []ui.Item {
 }
 
 func DnsConfigOnClick(systray *SystrayUI, localDns dns.Dns, configKey string) { //, SetTitle func(string)
-	systrayUI := *systray
-	if systrayUI.connectedDnsConfiguration.Name != localDns.Name {
+	if systray.connectedDnsConfiguration.Name != localDns.Name {
 		dnsService := dns.DnsService{}
-		_, err := dnsService.ChangeDns(dns.ResetDns, systrayUI.connectedDnsConfiguration)
+		_, err := dnsService.ChangeDns(dns.ResetDns, systray.connectedDnsConfiguration)
 		if err != nil {
 			fmt.Printf("Error ChangeDns: %v \n", err)
 			return
 		}
 	}
-	systrayUI.setIcon(false)
-	systrayUI.SystrayMenuItem[configKey].SetTitle(fmt.Sprintf("Config: %v", localDns.Name))
-	systrayUI.selectedDnsConfiguration = localDns
+	systray.setIcon(false)
+	systray.SystrayMenuItem[configKey].SetTitle(fmt.Sprintf("Config: %v", localDns.Name))
+	systray.selectedDnsConfiguration = localDns
 }
 
 func addNewConfig(systray *SystrayUI, key string) *ui.Item {
@@ -102,9 +99,10 @@ func addNewConfig(systray *SystrayUI, key string) *ui.Item {
 	systray.setIcon(true)
 	systray.setToolTip("connected to : " + newDns.Name)
 
-	exec := func(config dns.Dns) func() {
-		return func() {
+	exec := func(config dns.Dns) func() any {
+		return func() any {
 			DnsConfigOnClick(systray, config, key)
+			return nil
 		}
 	}(newDns)
 

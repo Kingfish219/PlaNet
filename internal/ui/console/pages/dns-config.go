@@ -27,8 +27,9 @@ func DnsConfig(repo interfaces.DnsRepository) *ui.Page {
 		items = append(items, ui.Item{
 			Key:   fmt.Sprintf("c_dnsconfig_%v", strings.ReplaceAll(dns.Name, " ", "")),
 			Title: dns.Name,
-			Exec: func() {
+			Exec: func() any {
 				repo.ModifyActiveDnsConfiguration(dns)
+				return nil
 			},
 		})
 	}
