@@ -71,7 +71,13 @@ func (systrayUI *SystrayUI) setToolTip(toolTip string) {
 	systray.SetTooltip("PlaNet:\n" + toolTip)
 }
 
-func (console *SystrayUI) Consume(command string) error {
+func (systray *SystrayUI) Consume(command string) error {
+	switch command {
+	case "new-config":
+		systray.refreshConfigsMenu()
+		fmt.Println("systray new config")
+		break
+	}
 	return nil
 }
 
@@ -139,15 +145,42 @@ func addSystrayMenu(pageItemPtr *ui.Item, parentMenu *systray.MenuItem, systrayU
 			go func(pageItem ui.Item) {
 				for {
 					<-subMenu.ClickedCh
-					returnVal := pageItem.Exec()
-					if pageItem.Key == "systray_main_dns_config_new" && returnVal != nil {
-
-						addSystrayMenu(returnVal.(*ui.Item), systrayUI.SystrayMenuItem["systray_main_dns_config"], systrayUI)
-					}
+					pageItem.Exec()
 				}
 
 			}(pageItem)
 		}
 
 	}
+}
+
+func (systrayUI *SystrayUI) refreshConfigsMenu() error {
+	dnsConfigurations, err := systrayUI.dnsRepository.GetDnsConfigurations()
+	if err != nil {
+		return err
+	}
+	systrayUI.dnsConfigurations = dnsConfigurations
+
+	for _, dnsConfig := range systrayUI.dnsConfigurations {
+
+		if systrayUI.SystrayMenuItem["systray_main_dns_config_"+fmt.Sprintf("%v", dnsConfig.Name)] != nil {
+			continue
+		}
+
+		exec := func(config dns.Dns) func() {
+			return func() {
+				DnsConfigOnClick(systrayUI, config, "systray_main_dns_config")
+			}
+		}(dnsConfig)
+
+		var item = &ui.Item{
+			Key:   "systray_main_dns_config_" + fmt.Sprintf("%v", dnsConfig.Name),
+			Title: dnsConfig.Name,
+			Exec:  exec,
+		}
+
+		addSystrayMenu(item, systrayUI.SystrayMenuItem["systray_main_dns_config"], systrayUI)
+
+	}
+	return nil
 }

@@ -22,9 +22,8 @@ func DnsConfig(parent *ui.Page, repo interfaces.DnsRepository) *ui.Page {
 			Key:      fmt.Sprintf("c_dnsconfig_%v", strings.ReplaceAll(dns.Name, " ", "")),
 			Title:    fmt.Sprintf("%v. %s (%s, %s)", index+1, dns.Name, dns.PrimaryDns, dns.SecendaryDns),
 			ShortKey: fmt.Sprint(index + 1),
-			Exec: func() any {
+			Exec: func() {
 				repo.ModifyActiveDnsConfiguration(dns)
-				return nil
 			},
 		})
 	}

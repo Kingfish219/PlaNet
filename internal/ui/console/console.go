@@ -36,7 +36,11 @@ func (console *ConsoleUI) Initialize() error {
 
 func (console *ConsoleUI) Consume(command string) error {
 	switch command {
+	case "main":
+		fmt.Println("main")
+		break
 	case "new-config":
+		fmt.Println("Console new config")
 		break
 	}
 

@@ -3,7 +3,9 @@ package systray
 import (
 	"fmt"
 
+	"github.com/Kingfish219/PlaNet/internal/publisher"
 	"github.com/Kingfish219/PlaNet/internal/ui"
+	"github.com/Kingfish219/PlaNet/internal/ui/console"
 )
 
 type MainPage struct {
@@ -30,23 +32,23 @@ func (mainPage *MainPage) Initialize() *ui.Page {
 			},
 			{
 				Title: "Network Interface Management",
-				Exec: func() any {
+				Exec: func() {
 					fmt.Println("Network Interface Management")
-					return nil
 				},
 			},
 			{
 				Title: "Tools",
-				Exec: func() any {
+				Exec: func() {
 					fmt.Println("Tools")
-					return nil
 				},
 			},
 			{
 				Title: "Console",
-				Exec: func() any {
-					fmt.Println("Console")
-					return nil
+				Exec: func() {
+					console := console.New(mainPage.systray.dnsRepository)
+					publisher := publisher.Publisher{}
+					publisher.UISubscribers = append(publisher.UISubscribers, console)
+					publisher.PublishUI("main")
 				},
 			},
 		},

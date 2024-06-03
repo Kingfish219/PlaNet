@@ -5,6 +5,9 @@ import (
 
 	"github.com/Kingfish219/PlaNet/internal/ui"
 	"github.com/Kingfish219/PlaNet/network/dns"
+
+	"github.com/Kingfish219/PlaNet/internal/publisher"
+	"github.com/Kingfish219/PlaNet/internal/ui/console"
 )
 
 type DnsConfigPage struct {
@@ -22,9 +25,8 @@ func (dnsConfig *DnsConfigPage) Initialize() *ui.Page {
 		{
 			Key:   "systray_main_dns_config_new",
 			Title: "Add New Config",
-			Exec: func() any {
-				uiItem := addNewConfig(dnsConfig.systray, "systray_main_dns_config")
-				return uiItem
+			Exec: func() {
+				addNewConfig(dnsConfig.systray, "systray_main_dns_config")
 			},
 		},
 	}
@@ -40,10 +42,9 @@ func (dnsConfig *DnsConfigPage) Initialize() *ui.Page {
 func getExtistedConfig(systrayUI *SystrayUI, key string) []ui.Item {
 	configsList := []ui.Item{}
 	for _, dnsConfig := range systrayUI.dnsConfigurations {
-		exec := func(config dns.Dns) func() any {
-			return func() any {
+		exec := func(config dns.Dns) func() {
+			return func() {
 				DnsConfigOnClick(systrayUI, config, key)
-				return nil
 			}
 		}(dnsConfig)
 
@@ -72,69 +73,10 @@ func DnsConfigOnClick(systray *SystrayUI, localDns dns.Dns, configKey string) { 
 	systray.selectedDnsConfiguration = localDns
 }
 
-func addNewConfig(systray *SystrayUI, key string) *ui.Item {
-	newDns := dns.Dns{Name: "MyTest", PrimaryDns: "185.51.200.2", SecendaryDns: "178.22.122.100"}
-	// newDns := openCMDAndGetDNSData()
-	if systray.SystrayMenuItem[newDns.Name] != nil {
-		fmt.Println(newDns.Name + " existed")
-		return &ui.Item{}
-	}
+func addNewConfig(systray *SystrayUI, key string) {
 
-	err := systray.dnsRepository.ModifyDnsConfigurations(newDns)
-	if err != nil {
-		fmt.Printf("Error : %v \n", err)
-		return &ui.Item{}
-	}
-	systray.selectedDnsConfiguration = newDns
-
-	dnsService := dns.DnsService{}
-	_, err = dnsService.ChangeDns(dns.SetDns, systray.connectedDnsConfiguration)
-	if err != nil {
-		fmt.Printf("Error : %v \n", err)
-		return &ui.Item{}
-	}
-
-	fmt.Println(newDns.Name + " connected successfully.")
-
-	systray.setIcon(true)
-	systray.setToolTip("connected to : " + newDns.Name)
-
-	exec := func(config dns.Dns) func() any {
-		return func() any {
-			DnsConfigOnClick(systray, config, key)
-			return nil
-		}
-	}(newDns)
-
-	var item = &ui.Item{
-		Key:   key + "_" + fmt.Sprintf("%v", newDns.Name),
-		Title: newDns.Name,
-		Exec:  exec,
-	}
-	return item
-	// dnsConfigSubMenu := systray.SystrayMenuItem[configMenuKey].AddSubMenuItem(newDns.Name, newDns.Name)
-
-	// dnsMenus[newDns.Name] = dnsConfigSubMenu
-	// localDns := newDns
-	// dnsConfigMenu.SetTitle(fmt.Sprintf("DNS config: %v", newDns.Name))
-
-	// go func(localDns dns.Dns) {
-	// 	for {
-	// 		<-dnsConfigSubMenu.ClickedCh
-	// 		if systrayUI.connectedDnsConfiguration.Name != localDns.Name {
-	// 			dnsService := dns.DnsService{}
-	// 			_, err := dnsService.ChangeDns(dns.ResetDns, systrayUI.connectedDnsConfiguration)
-	// 			if err != nil {
-	// 				fmt.Println(err)
-	// 				return
-	// 			}
-	// 		}
-
-	// 		systrayUI.setIcon(false)
-	// 		dnsConfigMenu.SetTitle(fmt.Sprintf("DNS config: %v", localDns.Name))
-	// 		systrayUI.selectedDnsConfiguration = localDns
-	// 	}
-
-	// }(localDns)
-
+	console := console.New(systray.dnsRepository)
+	publisher := publisher.Publisher{}
+	publisher.UISubscribers = append(publisher.UISubscribers, console)
+	publisher.PublishUI("new-config")
 }

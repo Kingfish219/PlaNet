@@ -31,26 +31,24 @@ func DnsManagement(parent *ui.Page, repo interfaces.DnsRepository) *ui.Page {
 				Key:      "c_dns_set",
 				Title:    "2. Set",
 				ShortKey: "2",
-				Exec: func() any {
+				Exec: func() {
 					dnsService := dns.DnsService{}
 					_, err := dnsService.ChangeDns(dns.SetDns, selectedDnsConfig)
 					if err == nil {
 						planetConf.ActiveDns = &selectedDnsConfig
 					}
-					return nil
 				},
 			},
 			{
 				Key:      "c_dns_reset",
 				Title:    "3. Reset",
 				ShortKey: "3",
-				Exec: func() any {
+				Exec: func() {
 					dnsService := dns.DnsService{}
 					_, err := dnsService.ChangeDns(dns.ResetDns, selectedDnsConfig)
 					if err == nil {
 						planetConf.ActiveDns = nil
 					}
-					return nil
 				},
 			},
 			{

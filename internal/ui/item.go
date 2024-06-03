@@ -5,5 +5,5 @@ type Item struct {
 	Title    string
 	ShortKey string
 	Page     *Page
-	Exec     func() any
+	Exec     func()
 }

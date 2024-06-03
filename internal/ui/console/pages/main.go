@@ -16,9 +16,8 @@ func Main(repo interfaces.DnsRepository) *ui.Page {
 				Key:      "c_main_dns",
 				Title:    "1. DNS Management",
 				ShortKey: "1",
-				Exec: func() any {
+				Exec: func() {
 					fmt.Println("")
-					return nil
 				},
 			},
 			{

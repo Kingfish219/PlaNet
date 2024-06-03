@@ -31,25 +31,22 @@ func (dnsConfig *DnsPage) Initialize() *ui.Page {
 		{
 			Key:   "systray_main_dns_set",
 			Title: "Set",
-			Exec: func() any {
+			Exec: func() {
 				setConfig(dnsConfig.systray)
-				return nil
 			},
 		},
 		{
 			Key:   "systray_main_dns_reset",
 			Title: "Reset",
-			Exec: func() any {
+			Exec: func() {
 				resetConfig(dnsConfig.systray)
-				return nil
 			},
 		},
 		{
 			Key:   "systray_main_dns_delete",
 			Title: "Delete This Config",
-			Exec: func() any {
+			Exec: func() {
 				deleteConfig(dnsConfig.systray)
-				return nil
 			},
 		},
 	}
