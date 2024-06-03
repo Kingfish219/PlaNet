@@ -122,6 +122,9 @@ func resetConfig(systrayUI *SystrayUI) {
 func setConfig(systrayUI *SystrayUI) {
 	dnsService := dns.DnsService{}
 	conectedDnsName := systrayUI.selectedDnsConfiguration.Name
+	if conectedDnsName == "" {
+		return
+	}
 	_, err := dnsService.ChangeDns(dns.SetDns, systrayUI.selectedDnsConfiguration)
 	if err != nil {
 		fmt.Printf("Error ChangeDns: %v \n", err)
