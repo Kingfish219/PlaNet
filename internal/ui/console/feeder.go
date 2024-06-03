@@ -1,24 +1,10 @@
 package console
 
 import (
-	"fmt"
-
 	"github.com/Kingfish219/PlaNet/internal/ui"
+	"github.com/Kingfish219/PlaNet/internal/ui/console/pages"
 )
 
-func FeedMainPage(console *ConsoleUI) {
-	console.ActivePage = MainPage()
-}
-
-func MainPage() ui.Page {
-	return ui.Page{
-		Actions: []ui.Action{
-			ui.Action{
-				Title: "DNS Management",
-				Exec: func() {
-					fmt.Println("Test")
-				},
-			},
-		},
-	}
+func FeedUI(console *ConsoleUI) *ui.Page {
+	return pages.Main(console.dnsRepository)
 }

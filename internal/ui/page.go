@@ -1,7 +1,9 @@
 package ui
 
 type Page struct {
+	Key      string
 	Title    string
-	Actions  []Action
+	Items    []Item
 	Initiate func()
+	Parent   *Page
 }
