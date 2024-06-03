@@ -10,11 +10,13 @@ import (
 	"atomicgo.dev/keyboard/keys"
 	"github.com/Kingfish219/PlaNet/internal/interfaces"
 	"github.com/Kingfish219/PlaNet/internal/ui"
+	"github.com/Kingfish219/PlaNet/internal/ui/console/pages"
 )
 
 type ConsoleUI struct {
 	Name          string
 	ActivePage    *ui.Page
+	ExitFunc      func()
 	dnsRepository interfaces.DnsRepository
 }
 
@@ -27,19 +29,41 @@ func New(dnsRepository interfaces.DnsRepository) *ConsoleUI {
 func (console *ConsoleUI) Initialize() error {
 	console.drawLogo()
 	page := FeedUI(console)
-	fmt.Println()
-	fmt.Println("What do you want to do?")
 	console.BuildPage(page)
 
 	return nil
 }
 
+func (console *ConsoleUI) Consume(command string) error {
+	switch command {
+	case "new-config":
+		break
+	}
+
+	return nil
+}
+
 func (console *ConsoleUI) BuildPage(page *ui.Page) {
-	// console.clearConsole()
+	console.ActivePage = page
+
+	console.clearConsole()
 	console.drawLogo()
 	console.buildUI(page)
+	if page.Initiate != nil {
+		page.Initiate()
+	}
+
+	if page.Parent != nil {
+		fmt.Println()
+		fmt.Println("0. Back")
+		console.ExitFunc = console.setBackKey
+	} else {
+		fmt.Println()
+		fmt.Println("0. Exit")
+		console.ExitFunc = console.setExitKey
+	}
+
 	console.buildKeyboard(page)
-	page.Initiate()
 }
 
 func (console *ConsoleUI) clearConsole() {
@@ -54,6 +78,14 @@ func (console *ConsoleUI) clearConsole() {
 	}
 }
 
+func (console *ConsoleUI) setBackKey() {
+	console.BuildPage(console.ActivePage.Parent)
+}
+
+func (console *ConsoleUI) setExitKey() {
+	console.BuildPage(pages.Exit())
+}
+
 func (console *ConsoleUI) drawLogo() {
 	fmt.Println()
 	fmt.Println("=======================================")
@@ -65,6 +97,10 @@ func (console *ConsoleUI) drawLogo() {
 func (console *ConsoleUI) buildUI(page *ui.Page) {
 	fmt.Println(page.Title)
 	fmt.Println()
+	if page.Items == nil {
+		return
+	}
+
 	for _, action := range page.Items {
 		fmt.Println(action.Title)
 	}
@@ -74,14 +110,20 @@ func (console *ConsoleUI) buildKeyboard(page *ui.Page) {
 	keyboard.Listen(func(key keys.Key) (stop bool, err error) {
 		for _, item := range page.Items {
 			if item.ShortKey == key.String() {
-				if item.Page.Key != "" {
-					console.BuildPage(item.Page)
+				if item.Page != nil {
+					if item.Page.Key != "" {
+						console.BuildPage(item.Page)
+					}
 				} else {
 					item.Exec()
 				}
 			}
 		}
 
-		return true, nil
+		if key.String() == "0" {
+			console.ExitFunc()
+		}
+
+		return false, nil
 	})
 }

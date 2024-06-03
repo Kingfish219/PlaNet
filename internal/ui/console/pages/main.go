@@ -8,7 +8,7 @@ import (
 )
 
 func Main(repo interfaces.DnsRepository) *ui.Page {
-	return &ui.Page{
+	page := &ui.Page{
 		Key:   "c_main",
 		Title: "What do you want to do?",
 		Items: []ui.Item{
@@ -16,7 +16,6 @@ func Main(repo interfaces.DnsRepository) *ui.Page {
 				Key:      "c_main_dns",
 				Title:    "1. DNS Management",
 				ShortKey: "1",
-				Page:     DnsManagement(repo),
 				Exec: func() any {
 					fmt.Println("")
 					return nil
@@ -32,12 +31,10 @@ func Main(repo interfaces.DnsRepository) *ui.Page {
 				Title:    "3. Tools",
 				ShortKey: "3",
 			},
-			{
-				Key:      "c_main_exit",
-				Title:    "0. Exit",
-				ShortKey: "0",
-				Page:     Exit(),
-			},
 		},
 	}
+
+	page.Items[0].Page = DnsManagement(page, repo)
+
+	return page
 }

@@ -51,7 +51,7 @@ func (repo *DnsRepositoryFile) WriteDb(fileDb *FileDb) error {
 	return nil
 }
 
-func (repo *DnsRepositoryFile) GetActiveDnsConfiguration() (dns.Dns, error) {
+func (repo *DnsRepositoryFile) GetSelectedDnsConfiguration() (dns.Dns, error) {
 	file, err := repo.ReadDb()
 	if err != nil {
 		return dns.Dns{}, err
@@ -61,7 +61,7 @@ func (repo *DnsRepositoryFile) GetActiveDnsConfiguration() (dns.Dns, error) {
 }
 
 func (repo *DnsRepositoryFile) ModifyActiveDnsConfiguration(dns.Dns) error {
-	activeDns, err := repo.GetActiveDnsConfiguration()
+	activeDns, err := repo.GetSelectedDnsConfiguration()
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,19 @@ func (repo *DnsRepositoryFile) ModifyDnsConfigurations(dns dns.Dns) error {
 		return err
 	}
 
-	dnsList = append(dnsList, dns)
+	existedIndex := -1
+	for index, d := range dnsList {
+		if d.Name == dns.Name {
+			existedIndex = index
+		}
+	}
+
+	if existedIndex > -1 {
+		dnsList[existedIndex] = dns
+	} else {
+		dnsList = append(dnsList, dns)
+	}
+
 	fileDb, err := repo.ReadDb()
 	if err != nil {
 		return err

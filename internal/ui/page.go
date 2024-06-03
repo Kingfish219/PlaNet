@@ -5,4 +5,5 @@ type Page struct {
 	Title    string
 	Items    []Item
 	Initiate func()
+	Parent   *Page
 }
